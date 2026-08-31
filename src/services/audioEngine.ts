@@ -1,5 +1,7 @@
 // Audio Synthesizer, Metronome, and Real-time Microphone Pitch Detection Engine
 
+import { PitchDetector } from 'pitchy';
+
 class AudioEngine {
   private audioCtx: AudioContext | null = null;
 
@@ -19,6 +21,12 @@ class AudioEngine {
   private isDetectingPitch: boolean = false;
   private isMuted: boolean = false;
   private lastDetectedPitch: { note: string; frequency: number; cents: number; timestamp: number } | null = null;
+  private pitchDetector: PitchDetector<Float32Array> | null = null;
+  private synthOscillator: OscillatorNode | null = null;
+  private synthGain: GainNode | null = null;
+  // The MIDI note number last assigned to the detected pitch, used to apply
+  // hysteresis around semitone boundaries (see `frequencyToNote`).
+  private lastNoteMidi: number | null = null;
 
   private initAudioContext() {
     if (!this.audioCtx) {
@@ -156,7 +164,7 @@ class AudioEngine {
   // Runs on an AudioWorkletNode: sample accumulation happens on the dedicated
   // audio rendering thread (fixed cadence tied to the mic's own sample rate,
   // unaffected by main-thread jank or tab visibility), which posts finished
-  // 2048-sample blocks back here for the actual autocorrelation math.
+  // 2048-sample blocks back here for the actual pitch-detection math.
   public async startPitchDetection(
     onPitchDetected: (data: { note: string; frequency: number; cents: number }) => void
   ): Promise<boolean> {
@@ -169,24 +177,8 @@ class AudioEngine {
       this.micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const source = this.audioCtx.createMediaStreamSource(this.micStream);
 
-      if (!this.workletModuleLoaded) {
-        await this.audioCtx.audioWorklet.addModule('/pitch-processor.js');
-        this.workletModuleLoaded = true;
-      }
-
-      this.workletNode = new AudioWorkletNode(this.audioCtx, 'pitch-processor', {
-        numberOfInputs: 1,
-        numberOfOutputs: 1,
-        outputChannelCount: [1],
-      });
-      this.workletNode.port.onmessage = (event: MessageEvent<Float32Array>) => {
-        this.handlePitchBuffer(event.data);
-      };
-
+      this.workletNode = await this.createWorkletNode();
       source.connect(this.workletNode);
-      // The processor never writes to its output, so this stays silent —
-      // it's only here to keep the node from being pruned from the audio graph.
-      this.workletNode.connect(this.audioCtx.destination);
 
       this.isDetectingPitch = true;
       return true;
@@ -196,9 +188,76 @@ class AudioEngine {
     }
   }
 
+  /**
+   * Test-only pitch source: plays a sine tone through the exact same
+   * AudioWorkletNode + detection pipeline the mic uses, instead of an
+   * actual instrument. Lets the detection algorithm and downstream scoring
+   * be exercised against a known, precisely-controllable frequency (see
+   * `setSynthTestFrequency`), which is otherwise impossible with a real mic.
+   */
+  public async startSynthTestSource(
+    onPitchDetected: (data: { note: string; frequency: number; cents: number }) => void,
+    frequency: number
+  ): Promise<boolean> {
+    this.initAudioContext();
+    if (!this.audioCtx) return false;
+
+    this.onPitchDetectedCallback = onPitchDetected;
+
+    this.workletNode = await this.createWorkletNode();
+
+    const osc = this.audioCtx.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(frequency, this.audioCtx.currentTime);
+
+    const gain = this.audioCtx.createGain();
+    gain.gain.setValueAtTime(0.15, this.audioCtx.currentTime);
+
+    osc.connect(gain);
+    gain.connect(this.workletNode);
+    gain.connect(this.audioCtx.destination); // audible, so you can confirm what's being fed into the detector
+    osc.start();
+
+    this.synthOscillator = osc;
+    this.synthGain = gain;
+    this.isDetectingPitch = true;
+    return true;
+  }
+
+  /** Retunes the running synth test tone (see `startSynthTestSource`) without restarting it. */
+  public setSynthTestFrequency(frequency: number) {
+    if (this.synthOscillator && this.audioCtx) {
+      this.synthOscillator.frequency.setValueAtTime(frequency, this.audioCtx.currentTime);
+    }
+  }
+
+  private async createWorkletNode(): Promise<AudioWorkletNode> {
+    if (!this.audioCtx) throw new Error('AudioContext not initialized');
+
+    if (!this.workletModuleLoaded) {
+      await this.audioCtx.audioWorklet.addModule('/pitch-processor.js');
+      this.workletModuleLoaded = true;
+    }
+
+    const node = new AudioWorkletNode(this.audioCtx, 'pitch-processor', {
+      numberOfInputs: 1,
+      numberOfOutputs: 1,
+      outputChannelCount: [1],
+    });
+    node.port.onmessage = (event: MessageEvent<Float32Array>) => {
+      this.handlePitchBuffer(event.data);
+    };
+
+    // The processor never writes to its output, so this stays silent —
+    // it's only here to keep the node from being pruned from the audio graph.
+    node.connect(this.audioCtx.destination);
+    return node;
+  }
+
   public stopPitchDetection() {
     this.isDetectingPitch = false;
     this.lastDetectedPitch = null;
+    this.lastNoteMidi = null;
     if (this.workletNode) {
       this.workletNode.port.onmessage = null;
       this.workletNode.disconnect();
@@ -207,6 +266,15 @@ class AudioEngine {
     if (this.micStream) {
       this.micStream.getTracks().forEach((track) => track.stop());
       this.micStream = null;
+    }
+    if (this.synthOscillator) {
+      this.synthOscillator.stop();
+      this.synthOscillator.disconnect();
+      this.synthOscillator = null;
+    }
+    if (this.synthGain) {
+      this.synthGain.disconnect();
+      this.synthGain = null;
     }
   }
 
@@ -223,9 +291,15 @@ class AudioEngine {
   private handlePitchBuffer = (buffer: Float32Array) => {
     if (!this.isDetectingPitch || !this.audioCtx) return;
 
-    const freq = autoCorrelate(buffer, this.audioCtx.sampleRate);
-    if (freq !== -1 && freq > 50 && freq < 2000) {
-      const noteData = frequencyToNote(freq);
+    if (!this.pitchDetector || this.pitchDetector.inputLength !== buffer.length) {
+      this.pitchDetector = PitchDetector.forFloat32Array(buffer.length);
+      // Matches the previous autocorrelation implementation's RMS noise floor.
+      this.pitchDetector.minVolumeAbsolute = 0.01;
+    }
+
+    const [freq, clarity] = this.pitchDetector.findPitch(buffer, this.audioCtx.sampleRate);
+    if (clarity > 0.9 && freq > 50 && freq < 2000) {
+      const noteData = this.frequencyToNote(freq);
       const frequency = Math.round(freq * 10) / 10;
       this.lastDetectedPitch = { note: noteData.note, frequency, cents: noteData.cents, timestamp: Date.now() };
       if (this.onPitchDetectedCallback) {
@@ -237,90 +311,44 @@ class AudioEngine {
       }
     }
   };
-}
 
-// Autocorrelation pitch detection algorithm
-function autoCorrelate(buffer: Float32Array, sampleRate: number): number {
-  const SIZE = buffer.length;
-  let rms = 0;
+  /**
+   * Converts a raw frequency to the nearest note name + signed cents deviation.
+   *
+   * Applies hysteresis around the semitone boundary (±50c): once a note is
+   * assigned, ordinary frame-to-frame jitter in the frequency estimate won't
+   * flip it to the neighboring semitone just because the reading crossed
+   * exactly ±50c. Without this, a pitch sustained near that boundary flickers
+   * between "correct note, sharp" and "next note, flat" from one detection
+   * frame to the next — which flips `isCorrect` (letter match) and the tuner's
+   * displayed note+cents every other frame, even though the actual pitch
+   * barely moved.
+   */
+  private frequencyToNote(frequency: number): { note: string; cents: number } {
+    const HYSTERESIS_CENTS = 5;
+    const noteNum = 12 * (Math.log(frequency / 440) / Math.log(2)) + 69;
 
-  for (let i = 0; i < SIZE; i++) {
-    const val = buffer[i];
-    rms += val * val;
-  }
-  rms = Math.sqrt(rms / SIZE);
-
-  // Noise floor threshold
-  if (rms < 0.01) return -1;
-
-  let r1 = 0;
-  let r2 = SIZE - 1;
-  const thres = 0.2;
-
-  for (let i = 0; i < SIZE / 2; i++) {
-    if (Math.abs(buffer[i]) < thres) {
-      r1 = i;
-      break;
+    let roundedNote: number;
+    if (this.lastNoteMidi !== null && Math.abs(noteNum - this.lastNoteMidi) * 100 <= 50 + HYSTERESIS_CENTS) {
+      roundedNote = this.lastNoteMidi;
+    } else {
+      roundedNote = Math.round(noteNum);
     }
+    this.lastNoteMidi = roundedNote;
+
+    const noteIndex = (roundedNote % 12 + 12) % 12;
+    const octave = Math.floor(roundedNote / 12) - 1;
+    const expectedFreq = 440 * Math.pow(2, (roundedNote - 69) / 12);
+    const cents = Math.round(1200 * (Math.log(frequency / expectedFreq) / Math.log(2)));
+
+    return {
+      note: `${NOTE_STRINGS[noteIndex]}${octave}`,
+      cents,
+    };
   }
-
-  for (let i = 1; i < SIZE / 2; i++) {
-    if (Math.abs(buffer[SIZE - i]) < thres) {
-      r2 = SIZE - i;
-      break;
-    }
-  }
-
-  const trimmedBuffer = buffer.slice(r1, r2);
-  const trimmedSize = trimmedBuffer.length;
-
-  const c = new Array(trimmedSize).fill(0);
-  for (let i = 0; i < trimmedSize; i++) {
-    for (let j = 0; j < trimmedSize - i; j++) {
-      c[i] = c[i] + trimmedBuffer[j] * trimmedBuffer[j + i];
-    }
-  }
-
-  let d = 0;
-  while (c[d] > c[d + 1]) d++;
-  let maxval = -1;
-  let maxpos = -1;
-
-  for (let i = d; i < trimmedSize; i++) {
-    if (c[i] > maxval) {
-      maxval = c[i];
-      maxpos = i;
-    }
-  }
-
-  let T0 = maxpos;
-
-  // Parabolic interpolation for fine accuracy
-  const x1 = c[T0 - 1];
-  const x2 = c[T0];
-  const x3 = c[T0 + 1];
-  const a = (x1 + x3 - 2 * x2) / 2;
-  const b = (x3 - x1) / 2;
-  if (a) T0 = T0 - b / (2 * a);
-
-  return sampleRate / T0;
 }
 
 const NOTE_STRINGS = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-
-function frequencyToNote(frequency: number): { note: string; cents: number } {
-  const noteNum = 12 * (Math.log(frequency / 440) / Math.log(2));
-  const roundedNote = Math.round(noteNum) + 69;
-  const noteIndex = (roundedNote % 12 + 12) % 12;
-  const octave = Math.floor(roundedNote / 12) - 1;
-  const expectedFreq = 440 * Math.pow(2, (roundedNote - 69) / 12);
-  const cents = Math.floor(1200 * (Math.log(frequency / expectedFreq) / Math.log(2)));
-
-  return {
-    note: `${NOTE_STRINGS[noteIndex]}${octave}`,
-    cents,
-  };
-}
 
 export function noteToFrequency(note: string): number {
   const match = note.match(/^([A-G]#?)(-?\d+)$/);

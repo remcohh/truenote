@@ -12,6 +12,11 @@ dist
 dist-ssr
 *.local
 
+# PocketBase binary & local database
+pocketbase_bin/pocketbase
+pocketbase_bin/pb_data/
+**/pb_data/**
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
@@ -22,3 +27,5 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+playwright-report

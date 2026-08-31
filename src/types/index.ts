@@ -33,6 +33,8 @@ export interface ScoreSample {
    * far away the wrong pitch class was.
    */
   centsOff: number | null; // null = no sound detected at all
+  /** Note name (e.g. "C3") as printed on the sheet at this instant, before transposition. Null during a rest. */
+  expectedNote: string | null;
 }
 
 export interface UserProfile {

@@ -115,10 +115,11 @@
 
 
 /* OSMD Music Sheet Cursor Styling */
+/* display is intentionally left to the cursor's own inline style (see
+   MusicSheetViewer's styleCursorElement) so hide()/show() keep working */
 #cursorImg-0, [id^="cursorImg"] {
   z-index: 9999 !important;
   pointer-events: none !important;
-  display: block !important;
   visibility: visible !important;
   opacity: 1 !important;
   position: absolute !important;
