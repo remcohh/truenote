@@ -18,6 +18,7 @@ pocketbase_bin/pb_data/
 **/pb_data/**
 
 # Editor directories and files
+.history
 .vscode/*
 !.vscode/extensions.json
 .idea
@@ -29,3 +30,4 @@ pocketbase_bin/pb_data/
 *.sw?
 
 playwright-report
+test-results
