@@ -8,7 +8,7 @@ interface SampleAccuracyChartProps {
   majorityThreshold?: number;
 }
 
-const CHART_HEIGHT = 200;
+const CHART_HEIGHT = 340;
 const CENTER_Y = CHART_HEIGHT / 2;
 // A correctly-identified note (the only kind that gets a bar) is by definition within
 // ±50c of its target — cross that and the nearest-note assignment flips, which shows

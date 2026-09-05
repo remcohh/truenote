@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Mic, MicOff, CheckCircle2, AlertCircle, Volume2, Award, Waves } from 'lucide-react';
-import { audioEngine, noteToFrequency } from '../../../services/audioEngine';
+import { Mic, MicOff, CheckCircle2 } from 'lucide-react';
+import { audioEngine } from '../../../services/audioEngine';
 import { noteLetter } from '../utils/noteParser';
 import { ErrorBanner } from '../../../components/ErrorBanner';
 import { CardHeader } from '../../../components/CardHeader';
@@ -8,9 +8,6 @@ import { CardHeader } from '../../../components/CardHeader';
 interface PitchDetectorProps {
   currentTargetNote: string | null;
 }
-
-// How far the synth test-tone offset slider reaches in either direction.
-const SYNTH_OFFSET_RANGE = 50;
 
 export const PitchDetector: React.FC<PitchDetectorProps> = ({
   currentTargetNote,
@@ -22,30 +19,10 @@ export const PitchDetector: React.FC<PitchDetectorProps> = ({
   const [micError, setMicError] = useState<string | null>(null);
   const [isMatch, setIsMatch] = useState<boolean>(false);
 
-  // Test source: feeds a synth tone into the same detection pipeline as the mic,
-  // at a controllable cents offset, so detection + scoring can be sanity-checked
-  // against a known ground-truth pitch instead of a real (imprecise) instrument.
-  const [sourceMode, setSourceMode] = useState<'mic' | 'synth'>('mic');
-  const [synthOffsetCents, setSynthOffsetCents] = useState<number>(0);
-
   const currentTargetNoteRef = useRef(currentTargetNote);
   useEffect(() => {
     currentTargetNoteRef.current = currentTargetNote;
   }, [currentTargetNote]);
-
-  const computeSynthFrequency = (offsetCents: number) => {
-    const base = currentTargetNoteRef.current ? noteToFrequency(currentTargetNoteRef.current) : 440;
-    return base * Math.pow(2, offsetCents / 1200);
-  };
-
-  // Keep the running synth test tone tracking the sheet's target note and the
-  // chosen offset, rather than requiring a restart every time either changes.
-  useEffect(() => {
-    if (isListening && sourceMode === 'synth') {
-      audioEngine.setSynthTestFrequency(computeSynthFrequency(synthOffsetCents));
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentTargetNote, synthOffsetCents, isListening, sourceMode]);
 
   const startListening = async () => {
     setMicError(null);
@@ -65,19 +42,12 @@ export const PitchDetector: React.FC<PitchDetectorProps> = ({
       }
     };
 
-    const success =
-      sourceMode === 'synth'
-        ? await audioEngine.startSynthTestSource(onPitchData, computeSynthFrequency(synthOffsetCents))
-        : await audioEngine.startPitchDetection(onPitchData);
+    const success = await audioEngine.startPitchDetection(onPitchData);
 
     if (success) {
       setIsListening(true);
     } else {
-      setMicError(
-        sourceMode === 'synth'
-          ? 'Could not start the test synth.'
-          : 'Could not access microphone. Please allow mic permissions in browser.'
-      );
+      setMicError('Could not access microphone. Please allow mic permissions in browser.');
     }
   };
 
@@ -102,13 +72,6 @@ export const PitchDetector: React.FC<PitchDetectorProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handlePlayReferenceTone = () => {
-    if (currentTargetNote) {
-      const freq = noteToFrequency(currentTargetNote);
-      audioEngine.playTone(freq, 0.8);
-    }
-  };
-
   return (
     <div className="pitch-detector-card glass-card p-5 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-md dark:shadow-lg flex flex-col gap-3.5 min-w-0">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -119,7 +82,7 @@ export const PitchDetector: React.FC<PitchDetectorProps> = ({
           subtitle="Mic pitch analyzer"
         />
 
-        {/* Mic/Synth Toggle Button */}
+        {/* Mic Toggle Button */}
         <button
           onClick={toggleMic}
           className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition border ${
@@ -131,12 +94,8 @@ export const PitchDetector: React.FC<PitchDetectorProps> = ({
           {isListening ? (
             <>
               <span className="w-2 h-2 rounded-full bg-teal-500 dark:bg-teal-400 animate-ping"></span>
-              {sourceMode === 'synth' ? <Waves size={14} /> : <Mic size={14} />}
-              {sourceMode === 'synth' ? 'Synth Playing...' : 'Listening...'}
-            </>
-          ) : sourceMode === 'synth' ? (
-            <>
-              <Waves size={14} /> Start Test Synth
+              <Mic size={14} />
+              Listening...
             </>
           ) : (
             <>
@@ -146,52 +105,6 @@ export const PitchDetector: React.FC<PitchDetectorProps> = ({
         </button>
       </div>
 
-      {/* Source Selector: real mic vs. a synth test tone for validating detection/scoring */}
-      <div className="flex items-center gap-2">
-        <span className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-extrabold">Source</span>
-        <div className="flex p-0.5 bg-slate-100 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
-          {(['mic', 'synth'] as const).map((mode) => (
-            <button
-              key={mode}
-              onClick={() => setSourceMode(mode)}
-              disabled={isListening}
-              className={`px-2.5 py-1 rounded-md text-[10px] font-bold transition disabled:opacity-50 disabled:cursor-not-allowed ${
-                sourceMode === mode
-                  ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-sm'
-                  : 'text-slate-500 dark:text-slate-400'
-              }`}
-            >
-              {mode === 'mic' ? 'Mic' : 'Test Synth'}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {sourceMode === 'synth' && (
-        <div className="flex flex-col gap-1 -mt-1">
-          <div className="flex justify-between text-[10px] text-slate-700 dark:text-slate-400 font-mono font-extrabold">
-            <span>FLAT</span>
-            <span>
-              {synthOffsetCents === 0 ? 'IN TUNE' : synthOffsetCents > 0 ? `+${synthOffsetCents}c` : `${synthOffsetCents}c`}
-            </span>
-            <span>SHARP</span>
-          </div>
-          <input
-            type="range"
-            min={-SYNTH_OFFSET_RANGE}
-            max={SYNTH_OFFSET_RANGE}
-            step={1}
-            value={synthOffsetCents}
-            onChange={(e) => setSynthOffsetCents(Number(e.target.value))}
-            className="w-full accent-teal-500"
-          />
-          <p className="text-[10px] text-slate-500 dark:text-slate-400">
-            Plays the sheet's target note (or A4 if none), offset by this many cents — use it to confirm the tuner and score
-            correctly report sharp vs. flat against a known pitch.
-          </p>
-        </div>
-      )}
-
       {micError && <ErrorBanner message={micError} className="text-xs p-3 font-medium" />}
 
       {/* Main Pitch Display Box */}
@@ -199,20 +112,9 @@ export const PitchDetector: React.FC<PitchDetectorProps> = ({
         {/* Current Target Note from Sheet */}
         <div className="flex flex-col gap-1 items-center justify-center p-3.5 bg-white dark:bg-slate-950/70 rounded-xl border border-slate-300 dark:border-slate-800 shadow-sm">
           <span className="text-[10px] uppercase tracking-wider text-slate-700 dark:text-slate-400 font-extrabold">Sheet Target</span>
-          <div className="flex items-center gap-1.5">
-            <span className="text-3xl font-extrabold text-indigo-700 dark:text-indigo-400 font-mono">
-              {currentTargetNote || '—'}
-            </span>
-            {currentTargetNote && (
-              <button
-                onClick={handlePlayReferenceTone}
-                className="p-1 text-indigo-700 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-950/50 rounded-lg transition"
-                title="Play reference tone audio"
-              >
-                <Volume2 size={16} />
-              </button>
-            )}
-          </div>
+          <span className="text-3xl font-extrabold text-indigo-700 dark:text-indigo-400 font-mono">
+            {currentTargetNote || '—'}
+          </span>
         </div>
 
         {/* Live Detected Note from Microphone */}
@@ -265,4 +167,3 @@ export const PitchDetector: React.FC<PitchDetectorProps> = ({
     </div>
   );
 };
-

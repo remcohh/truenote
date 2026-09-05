@@ -2,6 +2,7 @@ import React from 'react';
 import { Trophy, Clock, Activity, CheckCircle2, X, BarChart3, RotateCcw, Sparkles, Download } from 'lucide-react';
 import type { PracticeSession, ScoreSample } from '../../../types';
 import { SampleAccuracyChart } from './SampleAccuracyChart';
+import { SampleFrequencyChart } from './SampleFrequencyChart';
 import { StatTile } from '../../../components/StatTile';
 
 /** Downloads the raw per-sample evaluation log as JSON, for offline debugging of the scoring algorithm. */
@@ -46,15 +47,16 @@ export const PracticeCompleteModal: React.FC<PracticeCompleteModalProps> = ({
   const intonationGrade = getGradeInfo(session.intonationScore);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="glass-card max-w-4xl w-full p-8 sm:p-10 rounded-3xl border border-slate-200/90 dark:border-slate-800 shadow-2xl relative animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
-        {/* Close Button */}
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-700 dark:hover:text-white rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-        >
-          <X size={18} />
-        </button>
+    <div className="fixed inset-0 z-50 bg-white dark:bg-slate-950 overflow-y-auto animate-in fade-in duration-200">
+      {/* Close Button */}
+      <button
+        onClick={onClose}
+        className="fixed top-4 right-4 z-10 p-2 text-slate-400 hover:text-slate-700 dark:hover:text-white rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+      >
+        <X size={18} />
+      </button>
+
+      <div className="max-w-6xl w-full mx-auto px-8 sm:px-10 pt-16 pb-10">
 
         {/* Celebration Trophy Badge */}
         <div className="relative w-20 h-20 mx-auto mb-5 flex items-center justify-center">
@@ -133,6 +135,9 @@ export const PracticeCompleteModal: React.FC<PracticeCompleteModalProps> = ({
 
         {/* Per-Sample Accuracy Chart */}
         <SampleAccuracyChart samples={samples} majorityThreshold={majorityThreshold} />
+
+        {/* Raw Played Frequency Chart */}
+        <SampleFrequencyChart samples={samples} />
 
         {/* Sync Indicator Pill */}
         <div className="flex items-center justify-center gap-2 py-2 px-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-xl text-xs font-semibold mb-6">

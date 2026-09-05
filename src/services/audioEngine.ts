@@ -4,6 +4,11 @@ import { PitchDetector } from 'pitchy';
 
 class AudioEngine {
   private audioCtx: AudioContext | null = null;
+  // Every sound-producing node connects here instead of straight to destination, so
+  // overlapping sounds (e.g. a metronome click landing during the test tone) get
+  // compressed instead of hard-clipping - lets individual gains be pushed louder
+  // without risking the "distorted garbage" that comes from summed output over 1.0.
+  private limiterNode: DynamicsCompressorNode | null = null;
 
   // Metronome state
   private metronomeTimer: number | null = null;
@@ -22,8 +27,7 @@ class AudioEngine {
   private isMuted: boolean = false;
   private lastDetectedPitch: { note: string; frequency: number; cents: number; timestamp: number } | null = null;
   private pitchDetector: PitchDetector<Float32Array> | null = null;
-  private synthOscillator: OscillatorNode | null = null;
-  private synthGain: GainNode | null = null;
+  private onPitchDetectedCallback: ((data: { note: string; frequency: number; cents: number }) => void) | null = null;
   // The MIDI note number last assigned to the detected pitch, used to apply
   // hysteresis around semitone boundaries (see `frequencyToNote`).
   private lastNoteMidi: number | null = null;
@@ -35,6 +39,18 @@ class AudioEngine {
     }
     if (this.audioCtx.state === 'suspended') {
       this.audioCtx.resume();
+    }
+    if (!this.limiterNode) {
+      const limiter = this.audioCtx.createDynamicsCompressor();
+      // Aggressive brick-wall-ish settings: only kicks in when sources actually
+      // overlap and would otherwise clip, transparent the rest of the time.
+      limiter.threshold.setValueAtTime(-6, this.audioCtx.currentTime);
+      limiter.knee.setValueAtTime(0, this.audioCtx.currentTime);
+      limiter.ratio.setValueAtTime(20, this.audioCtx.currentTime);
+      limiter.attack.setValueAtTime(0.001, this.audioCtx.currentTime);
+      limiter.release.setValueAtTime(0.1, this.audioCtx.currentTime);
+      limiter.connect(this.audioCtx.destination);
+      this.limiterNode = limiter;
     }
   }
 
@@ -124,7 +140,7 @@ class AudioEngine {
     gain.gain.exponentialRampToValueAtTime(0.001, time + 0.035);
 
     osc.connect(gain);
-    gain.connect(this.audioCtx.destination);
+    gain.connect(this.limiterNode ?? this.audioCtx.destination);
 
     osc.start(time);
     osc.stop(time + 0.04);
@@ -138,27 +154,6 @@ class AudioEngine {
   }
 
 
-
-  // --- Play Reference Tone (e.g. C4 = 261.63Hz) ---
-  public playTone(freq: number, durationSeconds: number = 0.5) {
-    this.initAudioContext();
-    if (!this.audioCtx) return;
-
-    const osc = this.audioCtx.createOscillator();
-    const gain = this.audioCtx.createGain();
-
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(freq, this.audioCtx.currentTime);
-
-    gain.gain.setValueAtTime(0.3, this.audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, this.audioCtx.currentTime + durationSeconds);
-
-    osc.connect(gain);
-    gain.connect(this.audioCtx.destination);
-
-    osc.start();
-    osc.stop(this.audioCtx.currentTime + durationSeconds);
-  }
 
   // --- Real-time Pitch Detection (Mic Input) ---
   // Runs on an AudioWorkletNode: sample accumulation happens on the dedicated
@@ -185,49 +180,6 @@ class AudioEngine {
     } catch (err) {
       console.warn('Microphone access denied or unavailable:', err);
       return false;
-    }
-  }
-
-  /**
-   * Test-only pitch source: plays a sine tone through the exact same
-   * AudioWorkletNode + detection pipeline the mic uses, instead of an
-   * actual instrument. Lets the detection algorithm and downstream scoring
-   * be exercised against a known, precisely-controllable frequency (see
-   * `setSynthTestFrequency`), which is otherwise impossible with a real mic.
-   */
-  public async startSynthTestSource(
-    onPitchDetected: (data: { note: string; frequency: number; cents: number }) => void,
-    frequency: number
-  ): Promise<boolean> {
-    this.initAudioContext();
-    if (!this.audioCtx) return false;
-
-    this.onPitchDetectedCallback = onPitchDetected;
-
-    this.workletNode = await this.createWorkletNode();
-
-    const osc = this.audioCtx.createOscillator();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(frequency, this.audioCtx.currentTime);
-
-    const gain = this.audioCtx.createGain();
-    gain.gain.setValueAtTime(0.15, this.audioCtx.currentTime);
-
-    osc.connect(gain);
-    gain.connect(this.workletNode);
-    gain.connect(this.audioCtx.destination); // audible, so you can confirm what's being fed into the detector
-    osc.start();
-
-    this.synthOscillator = osc;
-    this.synthGain = gain;
-    this.isDetectingPitch = true;
-    return true;
-  }
-
-  /** Retunes the running synth test tone (see `startSynthTestSource`) without restarting it. */
-  public setSynthTestFrequency(frequency: number) {
-    if (this.synthOscillator && this.audioCtx) {
-      this.synthOscillator.frequency.setValueAtTime(frequency, this.audioCtx.currentTime);
     }
   }
 
@@ -266,15 +218,6 @@ class AudioEngine {
     if (this.micStream) {
       this.micStream.getTracks().forEach((track) => track.stop());
       this.micStream = null;
-    }
-    if (this.synthOscillator) {
-      this.synthOscillator.stop();
-      this.synthOscillator.disconnect();
-      this.synthOscillator = null;
-    }
-    if (this.synthGain) {
-      this.synthGain.disconnect();
-      this.synthGain = null;
     }
   }
 

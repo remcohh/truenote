@@ -250,6 +250,7 @@ function sample(overrides: Partial<ScoreSample>): ScoreSample {
     isRest: false,
     isCorrect: true,
     centsOff: 0,
+    playedFrequency: null,
     expectedNote: 'C4',
     noteOnsetBeat: 0,
     isNoteBoundary: false,

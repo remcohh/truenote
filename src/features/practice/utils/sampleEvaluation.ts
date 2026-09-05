@@ -73,10 +73,9 @@ function noteProgress(activeNote: NoteTimelineEntry, elapsedBeats: number): numb
  * actually heard (note label + frequency), not just how far off it was. Dev-only: this
  * fires on every rejected sample, which is too noisy for production use.
  */
-function logRejection(reason: string, played: DetectedPitch) {
-  if (!import.meta.env.DEV) return;
-  const heard = played ? `${played.note} (${played.frequency.toFixed(1)}Hz)` : 'nothing';
-  console.debug(`[scoring] rejected - ${reason} - heard: ${heard}`);
+function logRejection(_reason: string, _played: DetectedPitch) {
+  // Silenced: fires on every rejected sample, drowning out other console output
+  // while diagnosing the test-tone retuning issue. Re-enable if needed.
 }
 
 /**
@@ -109,6 +108,7 @@ export function evaluateSample(input: SampleEvaluationInput): ScoreSample {
   } = input;
 
   const isFresh = played !== null && now - played.timestamp <= stalePitchMs;
+  const playedFrequency = isFresh ? played!.frequency : null;
 
   if (!activeNote) {
     // Resting: correct means staying silent, any detected pitch is a false entry.
@@ -119,6 +119,7 @@ export function evaluateSample(input: SampleEvaluationInput): ScoreSample {
       isRest: true,
       isCorrect,
       centsOff: null,
+      playedFrequency,
       expectedNote: null,
       noteOnsetBeat: null,
       isNoteBoundary: false,
@@ -154,6 +155,7 @@ export function evaluateSample(input: SampleEvaluationInput): ScoreSample {
     isRest: false,
     isCorrect,
     centsOff,
+    playedFrequency,
     expectedNote: sheetNoteName,
     noteOnsetBeat: activeNote.startBeat,
     isNoteBoundary,
