@@ -1,13 +1,25 @@
 import React from 'react';
-import { Trophy, Clock, Activity, CheckCircle2, X, BarChart3, RotateCcw, Sparkles } from 'lucide-react';
+import { Trophy, Clock, Activity, CheckCircle2, X, BarChart3, RotateCcw, Sparkles, Download } from 'lucide-react';
 import type { PracticeSession, ScoreSample } from '../../../types';
 import { SampleAccuracyChart } from './SampleAccuracyChart';
 import { StatTile } from '../../../components/StatTile';
+
+/** Downloads the raw per-sample evaluation log as JSON, for offline debugging of the scoring algorithm. */
+function downloadSampleLog(session: PracticeSession, samples: ScoreSample[]) {
+  const blob = new Blob([JSON.stringify({ session, samples }, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `truenote-samples-${session.exerciseId}-${session.timestamp}.json`;
+  link.click();
+  URL.revokeObjectURL(url);
+}
 
 interface PracticeCompleteModalProps {
   session: PracticeSession | null;
   exerciseTitle: string;
   samples: ScoreSample[];
+  majorityThreshold: number;
   onClose: () => void;
   onViewStats: () => void;
 }
@@ -16,6 +28,7 @@ export const PracticeCompleteModal: React.FC<PracticeCompleteModalProps> = ({
   session,
   exerciseTitle,
   samples,
+  majorityThreshold,
   onClose,
   onViewStats,
 }) => {
@@ -119,7 +132,7 @@ export const PracticeCompleteModal: React.FC<PracticeCompleteModalProps> = ({
         </div>
 
         {/* Per-Sample Accuracy Chart */}
-        <SampleAccuracyChart samples={samples} />
+        <SampleAccuracyChart samples={samples} majorityThreshold={majorityThreshold} />
 
         {/* Sync Indicator Pill */}
         <div className="flex items-center justify-center gap-2 py-2 px-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-xl text-xs font-semibold mb-6">
@@ -144,6 +157,14 @@ export const PracticeCompleteModal: React.FC<PracticeCompleteModalProps> = ({
             <BarChart3 size={15} /> View Full Stats
           </button>
         </div>
+
+        {/* Debug: export the raw per-sample evaluation log for offline scoring analysis */}
+        <button
+          onClick={() => downloadSampleLog(session, samples)}
+          className="w-full mt-2.5 py-2 text-[11px] font-semibold text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 transition flex items-center justify-center gap-1.5"
+        >
+          <Download size={12} /> Download sample data
+        </button>
       </div>
     </div>
   );

@@ -4,6 +4,8 @@ import {
   DEFAULT_RELEASE_WINDOW_FRACTION,
   DEFAULT_STALE_PITCH_MS,
   DEFAULT_INTONATION_TOLERANCE_CENTS,
+  DEFAULT_MAJORITY_THRESHOLD,
+  DEFAULT_VOTE_BOUNDARY_MARGIN_FRACTION,
 } from '../utils/sampleEvaluation';
 
 interface ScoringTuningPanelProps {
@@ -13,6 +15,10 @@ interface ScoringTuningPanelProps {
   onStalePitchMsChange: (ms: number) => void;
   intonationToleranceCents: number;
   onIntonationToleranceCentsChange: (cents: number) => void;
+  majorityThreshold: number;
+  onMajorityThresholdChange: (fraction: number) => void;
+  voteBoundaryMarginFraction: number;
+  onVoteBoundaryMarginFractionChange: (fraction: number) => void;
 }
 
 /**
@@ -28,6 +34,10 @@ export function ScoringTuningPanel({
   onStalePitchMsChange,
   intonationToleranceCents,
   onIntonationToleranceCentsChange,
+  majorityThreshold,
+  onMajorityThresholdChange,
+  voteBoundaryMarginFraction,
+  onVoteBoundaryMarginFractionChange,
 }: ScoringTuningPanelProps) {
   return (
     <div className="glass-card p-5 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-md dark:shadow-lg flex flex-col gap-5 min-w-0">
@@ -130,6 +140,71 @@ export function ScoringTuningPanel({
             className="self-start text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
           >
             Reset to default (±{DEFAULT_INTONATION_TOLERANCE_CENTS}c)
+          </button>
+        )}
+      </div>
+
+      <div className="bg-slate-200/70 dark:bg-slate-900/60 p-4 rounded-xl border border-slate-300 dark:border-slate-800 flex flex-col gap-2">
+        <div className="flex items-baseline justify-between gap-2">
+          <label htmlFor="majority-threshold-slider" className="text-xs font-bold text-slate-700 dark:text-slate-300">
+            Note majority threshold
+          </label>
+          <span className="text-lg font-extrabold text-teal-700 dark:text-teal-400 font-mono">
+            {Math.round(majorityThreshold * 100)}%
+          </span>
+        </div>
+        <p className="text-[11px] text-slate-500 dark:text-slate-400">
+          Share of a note's samples that must be pitch-correct for the whole note to count as correct.
+        </p>
+        <input
+          id="majority-threshold-slider"
+          type="range"
+          min="50"
+          max="100"
+          step="1"
+          value={Math.round(majorityThreshold * 100)}
+          onChange={(e) => onMajorityThresholdChange(parseInt(e.target.value, 10) / 100)}
+          className="w-full h-2 bg-slate-300 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-teal-600 dark:accent-teal-400"
+        />
+        {majorityThreshold !== DEFAULT_MAJORITY_THRESHOLD && (
+          <button
+            onClick={() => onMajorityThresholdChange(DEFAULT_MAJORITY_THRESHOLD)}
+            className="self-start text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
+          >
+            Reset to default ({Math.round(DEFAULT_MAJORITY_THRESHOLD * 100)}%)
+          </button>
+        )}
+      </div>
+
+      <div className="bg-slate-200/70 dark:bg-slate-900/60 p-4 rounded-xl border border-slate-300 dark:border-slate-800 flex flex-col gap-2">
+        <div className="flex items-baseline justify-between gap-2">
+          <label htmlFor="vote-boundary-margin-slider" className="text-xs font-bold text-slate-700 dark:text-slate-300">
+            Note boundary margin
+          </label>
+          <span className="text-lg font-extrabold text-teal-700 dark:text-teal-400 font-mono">
+            {Math.round(voteBoundaryMarginFraction * 100)}%
+          </span>
+        </div>
+        <p className="text-[11px] text-slate-500 dark:text-slate-400">
+          Portion of a note's duration, at each end, excluded from its majority vote — forgives a note started
+          slightly early/late or released slightly early.
+        </p>
+        <input
+          id="vote-boundary-margin-slider"
+          type="range"
+          min="0"
+          max="30"
+          step="1"
+          value={Math.round(voteBoundaryMarginFraction * 100)}
+          onChange={(e) => onVoteBoundaryMarginFractionChange(parseInt(e.target.value, 10) / 100)}
+          className="w-full h-2 bg-slate-300 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-teal-600 dark:accent-teal-400"
+        />
+        {voteBoundaryMarginFraction !== DEFAULT_VOTE_BOUNDARY_MARGIN_FRACTION && (
+          <button
+            onClick={() => onVoteBoundaryMarginFractionChange(DEFAULT_VOTE_BOUNDARY_MARGIN_FRACTION)}
+            className="self-start text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
+          >
+            Reset to default ({Math.round(DEFAULT_VOTE_BOUNDARY_MARGIN_FRACTION * 100)}%)
           </button>
         )}
       </div>

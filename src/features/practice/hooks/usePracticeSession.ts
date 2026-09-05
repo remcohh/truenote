@@ -8,6 +8,8 @@ import {
   DEFAULT_RELEASE_WINDOW_FRACTION,
   DEFAULT_STALE_PITCH_MS,
   DEFAULT_INTONATION_TOLERANCE_CENTS,
+  DEFAULT_MAJORITY_THRESHOLD,
+  DEFAULT_VOTE_BOUNDARY_MARGIN_FRACTION,
 } from '../utils/sampleEvaluation';
 import { savePracticeSession, fetchPracticeSessions } from '../../../services/pocketbase';
 
@@ -49,10 +51,14 @@ export function usePracticeSession({ currentExercise, bpm, transpose }: UsePract
   const [releaseWindowFraction, setReleaseWindowFraction] = useState(DEFAULT_RELEASE_WINDOW_FRACTION);
   const [stalePitchMs, setStalePitchMs] = useState(DEFAULT_STALE_PITCH_MS);
   const [intonationToleranceCents, setIntonationToleranceCents] = useState(DEFAULT_INTONATION_TOLERANCE_CENTS);
+  const [majorityThreshold, setMajorityThreshold] = useState(DEFAULT_MAJORITY_THRESHOLD);
+  const [voteBoundaryMarginFraction, setVoteBoundaryMarginFraction] = useState(DEFAULT_VOTE_BOUNDARY_MARGIN_FRACTION);
   const releaseWindowFractionRef = useRef(releaseWindowFraction);
   const stalePitchMsRef = useRef(stalePitchMs);
+  const voteBoundaryMarginFractionRef = useRef(voteBoundaryMarginFraction);
   useEffect(() => { releaseWindowFractionRef.current = releaseWindowFraction; }, [releaseWindowFraction]);
   useEffect(() => { stalePitchMsRef.current = stalePitchMs; }, [stalePitchMs]);
+  useEffect(() => { voteBoundaryMarginFractionRef.current = voteBoundaryMarginFraction; }, [voteBoundaryMarginFraction]);
 
   useEffect(() => {
     fetchPracticeSessions().then(setSessions);
@@ -95,7 +101,8 @@ export function usePracticeSession({ currentExercise, bpm, transpose }: UsePract
     const durationSeconds = Math.max(1, Math.round((Date.now() - startTime) / 1000));
     const { noteAccuracy, intonationAccuracy } = computeAccuracyScores(
       sampleLogRef.current,
-      intonationToleranceCents
+      intonationToleranceCents,
+      majorityThreshold
     );
 
     setLastSessionSamples(sampleLogRef.current);
@@ -112,7 +119,7 @@ export function usePracticeSession({ currentExercise, bpm, transpose }: UsePract
 
     setLastFinishedSession(newSession);
     setSessions((prev) => [newSession, ...prev]);
-  }, [currentExercise.id, currentExercise.title, bpm, intonationToleranceCents]);
+  }, [currentExercise.id, currentExercise.title, bpm, intonationToleranceCents, majorityThreshold]);
 
   const handleTogglePlay = useCallback(() => {
     if (isPlaying || isCountInActive) {
@@ -190,6 +197,7 @@ export function usePracticeSession({ currentExercise, bpm, transpose }: UsePract
         elapsedSeconds,
         stalePitchMs: stalePitchMsRef.current,
         releaseWindowFraction: releaseWindowFractionRef.current,
+        voteBoundaryMarginFraction: voteBoundaryMarginFractionRef.current,
       });
 
       sampleLogRef.current.push(sample);
@@ -256,6 +264,10 @@ export function usePracticeSession({ currentExercise, bpm, transpose }: UsePract
     setStalePitchMs,
     intonationToleranceCents,
     setIntonationToleranceCents,
+    majorityThreshold,
+    setMajorityThreshold,
+    voteBoundaryMarginFraction,
+    setVoteBoundaryMarginFraction,
   };
 }
 

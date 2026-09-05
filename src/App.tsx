@@ -124,6 +124,7 @@ export function App() {
         session={practice.lastFinishedSession}
         exerciseTitle={currentExercise.title}
         samples={practice.lastSessionSamples}
+        majorityThreshold={practice.majorityThreshold}
         onClose={practice.dismissFinishedSession}
         onViewStats={() => setActiveTab('stats')}
       />

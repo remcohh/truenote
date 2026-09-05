@@ -36,6 +36,10 @@ export interface ScoreSample {
   centsOff: number | null; // null = no sound detected at all
   /** Note name (e.g. "C3") as printed on the sheet at this instant, before transposition. Null during a rest. */
   expectedNote: string | null;
+  /** Identifies which note instance this sample belongs to (the note's startBeat, unique per occurrence in the piece). Null during a rest. */
+  noteOnsetBeat: number | null;
+  /** True when this sample falls within the head/tail margin of its note's duration - excluded from that note's majority vote. Always false for rests. */
+  isNoteBoundary: boolean;
 }
 
 export interface UserProfile {

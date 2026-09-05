@@ -26,6 +26,17 @@ export const DEFAULT_NOTE_MATCH_TOLERANCE_CENTS = 50;
 // tune) are reported separately since they measure different skills.
 export const DEFAULT_INTONATION_TOLERANCE_CENTS = 10;
 
+// Fraction (0-1) of a note's duration, at both its start and its end, excluded from
+// that note's majority vote (see DEFAULT_MAJORITY_THRESHOLD) — a note started a touch
+// early/late or released a touch early shouldn't be judged on those transitional,
+// ambiguous samples.
+export const DEFAULT_VOTE_BOUNDARY_MARGIN_FRACTION = 0.15;
+
+// Fraction of a note instance's (non-boundary) samples that must be pitch-class-correct
+// for the whole note to count as correct. Lets a note tolerate a brief burst of
+// misdetected samples without failing outright.
+export const DEFAULT_MAJORITY_THRESHOLD = 0.7;
+
 export interface SampleEvaluationInput {
   /** The note (or null for a rest) that is supposed to be sounding right now. */
   activeNote: NoteTimelineEntry | null;
@@ -41,6 +52,8 @@ export interface SampleEvaluationInput {
   releaseWindowFraction?: number;
   /** How far (cents) the played pitch may stray from the target and still count as the right note. Defaults to DEFAULT_NOTE_MATCH_TOLERANCE_CENTS. */
   noteMatchToleranceCents?: number;
+  /** Fraction (0-1) of a note's duration, at each end, excluded from its majority vote. Defaults to DEFAULT_VOTE_BOUNDARY_MARGIN_FRACTION. */
+  voteBoundaryMarginFraction?: number;
 }
 
 /** Folds a raw signed cents value to its nearest octave-equivalent, in range [-600, 600). */
@@ -53,6 +66,17 @@ function noteProgress(activeNote: NoteTimelineEntry, elapsedBeats: number): numb
   const duration = activeNote.endBeat - activeNote.startBeat;
   if (duration <= 0) return 0;
   return (elapsedBeats - activeNote.startBeat) / duration;
+}
+
+/**
+ * Explains, in the browser console, why a sample was marked incorrect - what was
+ * actually heard (note label + frequency), not just how far off it was. Dev-only: this
+ * fires on every rejected sample, which is too noisy for production use.
+ */
+function logRejection(reason: string, played: DetectedPitch) {
+  if (!import.meta.env.DEV) return;
+  const heard = played ? `${played.note} (${played.frequency.toFixed(1)}Hz)` : 'nothing';
+  console.debug(`[scoring] rejected - ${reason} - heard: ${heard}`);
 }
 
 /**
@@ -81,13 +105,24 @@ export function evaluateSample(input: SampleEvaluationInput): ScoreSample {
     stalePitchMs = DEFAULT_STALE_PITCH_MS,
     releaseWindowFraction = DEFAULT_RELEASE_WINDOW_FRACTION,
     noteMatchToleranceCents = DEFAULT_NOTE_MATCH_TOLERANCE_CENTS,
+    voteBoundaryMarginFraction = DEFAULT_VOTE_BOUNDARY_MARGIN_FRACTION,
   } = input;
 
   const isFresh = played !== null && now - played.timestamp <= stalePitchMs;
 
   if (!activeNote) {
     // Resting: correct means staying silent, any detected pitch is a false entry.
-    return { t: elapsedSeconds, isRest: true, isCorrect: !isFresh, centsOff: null, expectedNote: null };
+    const isCorrect = !isFresh;
+    if (!isCorrect) logRejection('sound detected during a rest', played);
+    return {
+      t: elapsedSeconds,
+      isRest: true,
+      isCorrect,
+      centsOff: null,
+      expectedNote: null,
+      noteOnsetBeat: null,
+      isNoteBoundary: false,
+    };
   }
 
   const requestedNoteName = midiHalfToneToNoteName(activeNote.halfTone + transpose);
@@ -97,14 +132,32 @@ export function evaluateSample(input: SampleEvaluationInput): ScoreSample {
     : null;
   const isSameNote = centsOff !== null && Math.abs(centsOff) <= noteMatchToleranceCents;
 
-  const isInReleaseWindow = noteProgress(activeNote, elapsedBeats) >= 1 - releaseWindowFraction;
+  const progress = noteProgress(activeNote, elapsedBeats);
+  const isInReleaseWindow = progress >= 1 - releaseWindowFraction;
   const isCorrect = isSameNote || (isInReleaseWindow && !isFresh);
+  const isNoteBoundary = progress < voteBoundaryMarginFraction || progress >= 1 - voteBoundaryMarginFraction;
+
+  if (!isCorrect) {
+    const progressPct = Math.round(progress * 100);
+    const reason = !isFresh
+      ? `no fresh pitch for ${requestedNoteName} (${progressPct}% through note, outside release window)`
+      : `expected ${requestedNoteName} but off by ${centsOff!.toFixed(0)}c (${progressPct}% through note)`;
+    logRejection(reason, played);
+  }
 
   // The chart labels the note as printed on the sheet (pre-transpose), not the
   // transposed pitch that's actually supposed to sound.
   const sheetNoteName = midiHalfToneToNoteName(activeNote.halfTone);
 
-  return { t: elapsedSeconds, isRest: false, isCorrect, centsOff, expectedNote: sheetNoteName };
+  return {
+    t: elapsedSeconds,
+    isRest: false,
+    isCorrect,
+    centsOff,
+    expectedNote: sheetNoteName,
+    noteOnsetBeat: activeNote.startBeat,
+    isNoteBoundary,
+  };
 }
 
 export interface AccuracyScores {
@@ -118,14 +171,51 @@ export interface AccuracyScores {
   intonationAccuracy: number;
 }
 
+/**
+ * Groups non-rest samples by the note instance they belong to (`noteOnsetBeat`) and
+ * votes each instance correct when at least `majorityThreshold` of its non-boundary
+ * samples were pitch-class-correct. Boundary samples (note start/end margins) are
+ * excluded from the vote unless excluding them would leave nothing to vote on.
+ *
+ * Exported so any other view of a session (e.g. `SampleAccuracyChart`) can look up the
+ * exact same per-note verdict this score is built from, keyed by `noteOnsetBeat`,
+ * instead of approximating its own - two independent "was this note correct"
+ * calculations disagreeing is worse than one shared source of truth.
+ */
+export function voteNoteInstances(
+  samples: ScoreSample[],
+  majorityThreshold: number = DEFAULT_MAJORITY_THRESHOLD
+): Map<number, boolean> {
+  const byInstance = new Map<number, ScoreSample[]>();
+  for (const s of samples) {
+    if (s.isRest || s.noteOnsetBeat === null) continue;
+    const group = byInstance.get(s.noteOnsetBeat) ?? [];
+    group.push(s);
+    byInstance.set(s.noteOnsetBeat, group);
+  }
+
+  const verdicts = new Map<number, boolean>();
+  for (const [onsetBeat, group] of byInstance) {
+    const coreSamples = group.filter((s) => !s.isNoteBoundary);
+    const votingPool = coreSamples.length > 0 ? coreSamples : group;
+    const correctCount = votingPool.filter((s) => s.isCorrect).length;
+    verdicts.set(onsetBeat, correctCount / votingPool.length >= majorityThreshold);
+  }
+  return verdicts;
+}
+
 /** Aggregates a session's per-instant samples into the two headline scores. */
 export function computeAccuracyScores(
   samples: ScoreSample[],
-  intonationToleranceCents: number = DEFAULT_INTONATION_TOLERANCE_CENTS
+  intonationToleranceCents: number = DEFAULT_INTONATION_TOLERANCE_CENTS,
+  majorityThreshold: number = DEFAULT_MAJORITY_THRESHOLD
 ): AccuracyScores {
-  const total = samples.length;
-  const correct = samples.filter((s) => s.isCorrect).length;
-  const noteAccuracy = total > 0 ? Math.round((correct / total) * 100) : 0;
+  const restSamples = samples.filter((s) => s.isRest);
+  const noteVerdicts = Array.from(voteNoteInstances(samples, majorityThreshold).values());
+
+  const totalUnits = restSamples.length + noteVerdicts.length;
+  const correctUnits = restSamples.filter((s) => s.isCorrect).length + noteVerdicts.filter(Boolean).length;
+  const noteAccuracy = totalUnits > 0 ? Math.round((correctUnits / totalUnits) * 100) : 0;
 
   const pitchedCorrectSamples = samples.filter((s) => s.isCorrect && s.centsOff !== null);
   const inTuneSamples = pitchedCorrectSamples.filter((s) => Math.abs(s.centsOff!) <= intonationToleranceCents);

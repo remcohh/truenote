@@ -1,8 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import type { ScoreSample } from '../../../types';
+import { voteNoteInstances, DEFAULT_MAJORITY_THRESHOLD } from '../utils/sampleEvaluation';
 
 interface SampleAccuracyChartProps {
   samples: ScoreSample[];
+  /** Same majority-vote threshold the session's note accuracy was scored with. Defaults to DEFAULT_MAJORITY_THRESHOLD. */
+  majorityThreshold?: number;
 }
 
 const CHART_HEIGHT = 200;
@@ -26,7 +29,10 @@ function pickTickIntervalSeconds(durationSeconds: number): number {
   return 10;
 }
 
-export const SampleAccuracyChart: React.FC<SampleAccuracyChartProps> = ({ samples }) => {
+export const SampleAccuracyChart: React.FC<SampleAccuracyChartProps> = ({
+  samples,
+  majorityThreshold = DEFAULT_MAJORITY_THRESHOLD,
+}) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [chartWidth, setChartWidth] = useState(FALLBACK_WIDTH);
 
@@ -52,6 +58,33 @@ export const SampleAccuracyChart: React.FC<SampleAccuracyChartProps> = ({ sample
   const tickInterval = pickTickIntervalSeconds(durationSeconds);
   const timeTicks: number[] = [];
   for (let t = 0; t <= durationSeconds; t += tickInterval) timeTicks.push(t);
+
+  // The exact same per-note pass/fail verdicts the score was computed from, keyed by
+  // noteOnsetBeat - reused here instead of approximating separately, so the chart's
+  // colors can never disagree with the number above it.
+  const noteVerdicts = voteNoteInstances(samples, majorityThreshold);
+
+  // Groups consecutive samples belonging to the same note (or rest) instance, so the
+  // x-axis can mark exactly where each new note was expected to start.
+  interface NoteSegment {
+    t: number;
+    expectedNote: string | null; // null for a rest
+    isCorrect: boolean; // looked up from noteVerdicts, not recomputed
+  }
+  const noteSegments: NoteSegment[] = [];
+  let segmentStart = 0;
+  const instanceKeyOf = (s: ScoreSample) => (s.isRest ? 'rest' : `note-${s.noteOnsetBeat}`);
+  for (let i = 1; i <= samples.length; i++) {
+    const endsHere = i === samples.length || instanceKeyOf(samples[i]) !== instanceKeyOf(samples[segmentStart]);
+    if (!endsHere) continue;
+    const first = samples[segmentStart];
+    noteSegments.push({
+      t: first.t,
+      expectedNote: first.isRest ? null : first.expectedNote,
+      isCorrect: first.isRest || first.noteOnsetBeat === null ? false : noteVerdicts.get(first.noteOnsetBeat) ?? false,
+    });
+    segmentStart = i;
+  }
 
   return (
     <div className="mb-6">
@@ -95,6 +128,22 @@ export const SampleAccuracyChart: React.FC<SampleAccuracyChartProps> = ({ sample
                 strokeWidth={1}
               />
 
+              {/* Note-boundary markers: where each new note (or rest) was expected to start,
+                  so a run of errors can be lined up against the note timeline. */}
+              {noteSegments.map((segment, i) => (
+                <line
+                  key={`boundary-${i}`}
+                  x1={segment.t * pxPerSecond}
+                  y1={0}
+                  x2={segment.t * pxPerSecond}
+                  y2={CHART_HEIGHT}
+                  stroke="currentColor"
+                  className="text-slate-300 dark:text-slate-700"
+                  strokeWidth={1}
+                  strokeDasharray="2,3"
+                />
+              ))}
+
               {samples.map((sample, i) => {
                 const x = sample.t * pxPerSecond;
 
@@ -120,15 +169,12 @@ export const SampleAccuracyChart: React.FC<SampleAccuracyChartProps> = ({ sample
                 return <rect key={i} x={x} y={y} width={BAR_WIDTH} height={Math.max(height, 1)} fill="#10b981" /* emerald-500 */ />;
               })}
 
-              {/* Expected-note label at the start of each run of consecutive wrong samples —
-                  labeling every wrong sample would just repeat the same note over and over. */}
-              {samples.map((sample, i) => {
-                if (sample.isCorrect || !sample.expectedNote) return null;
-                const previous = samples[i - 1];
-                const isRunStart = !previous || previous.isCorrect || !previous.expectedNote;
-                if (!isRunStart) return null;
+              {/* Expected-note label at the start of every note instance, colored by whether
+                  that instance was mostly played correctly - green for correct, red for wrong. */}
+              {noteSegments.map((segment, i) => {
+                if (!segment.expectedNote) return null; // rests aren't labeled
 
-                const x = sample.t * pxPerSecond;
+                const x = segment.t * pxPerSecond;
                 return (
                   <text
                     key={`label-${i}`}
@@ -138,9 +184,9 @@ export const SampleAccuracyChart: React.FC<SampleAccuracyChartProps> = ({ sample
                     fontFamily="monospace"
                     fontWeight="bold"
                     textAnchor={x < 12 ? 'start' : 'middle'}
-                    className="fill-rose-600 dark:fill-rose-400"
+                    className={segment.isCorrect ? 'fill-emerald-600 dark:fill-emerald-400' : 'fill-rose-600 dark:fill-rose-400'}
                   >
-                    {sample.expectedNote}
+                    {segment.expectedNote}
                   </text>
                 );
               })}

@@ -135,6 +135,10 @@ export function PracticeView({
           onStalePitchMsChange={practice.setStalePitchMs}
           intonationToleranceCents={practice.intonationToleranceCents}
           onIntonationToleranceCentsChange={practice.setIntonationToleranceCents}
+          majorityThreshold={practice.majorityThreshold}
+          onMajorityThresholdChange={practice.setMajorityThreshold}
+          voteBoundaryMarginFraction={practice.voteBoundaryMarginFraction}
+          onVoteBoundaryMarginFractionChange={practice.setVoteBoundaryMarginFraction}
         />
       </Modal>
     </div>
