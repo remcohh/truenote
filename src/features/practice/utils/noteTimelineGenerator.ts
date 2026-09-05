@@ -3,6 +3,10 @@ import { OpenSheetMusicDisplay } from 'opensheetmusicdisplay';
 export interface NoteTimelineEntry {
   startBeat: number;
   endBeat: number;
+  /** Seconds from the start of the piece, at the bpm the timeline was built with. */
+  startTime: number;
+  /** Seconds from the start of the piece, at the bpm the timeline was built with. */
+  endTime: number;
   halfTone: number;
 }
 
@@ -12,14 +16,20 @@ export interface NoteTimelineEntry {
  * advances (and reports a target note) once per metronome tick, so it can't tell us
  * what note is "correct" at an arbitrary instant between ticks — this timeline can,
  * which is what continuous fixed-rate scoring needs.
+ *
+ * `startTime`/`endTime` are derived from `bpm` and are only valid for that tempo —
+ * the caller must rebuild the timeline if bpm changes. This is fine because tempo is
+ * fixed for the duration of a practice session (the UI disables tempo controls while
+ * playing) and the timeline is rebuilt whenever bpm changes between sessions.
  */
-export function buildNoteTimeline(osmd: OpenSheetMusicDisplay | null): NoteTimelineEntry[] {
+export function buildNoteTimeline(osmd: OpenSheetMusicDisplay | null, bpm: number): NoteTimelineEntry[] {
   if (!osmd || !osmd.Sheet) return [];
 
   const measures = osmd.Sheet.SourceMeasures;
   if (!measures || measures.length === 0) return [];
 
   const timeline: NoteTimelineEntry[] = [];
+  const secondsPerBeat = 60 / bpm;
 
   for (let m = 0; m < measures.length; m++) {
     const measure = measures[m];
@@ -57,10 +67,13 @@ export function buildNoteTimeline(osmd: OpenSheetMusicDisplay | null): NoteTimel
 
       const startBeat = (measureStart + container.Timestamp.realValue) * 4.0;
       const durationBeats = firstNote.Length.realValue * 4.0;
+      const endBeat = startBeat + durationBeats;
 
       timeline.push({
         startBeat,
-        endBeat: startBeat + durationBeats,
+        endBeat,
+        startTime: startBeat * secondsPerBeat,
+        endTime: endBeat * secondsPerBeat,
         halfTone: firstNote.Pitch.halfTone,
       });
     }

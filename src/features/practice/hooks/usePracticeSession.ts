@@ -1,20 +1,19 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Exercise, PracticeSession, ScoreSample } from '../../../types';
-import { audioEngine, noteToFrequency } from '../../../services/audioEngine';
-import { midiHalfToneToNoteName, noteLetter } from '../utils/noteParser';
+import { audioEngine } from '../../../services/audioEngine';
 import { findActiveNote, type NoteTimelineEntry } from '../utils/noteTimelineGenerator';
+import {
+  evaluateSample,
+  computeAccuracyScores,
+  DEFAULT_RELEASE_WINDOW_FRACTION,
+  DEFAULT_STALE_PITCH_MS,
+  DEFAULT_INTONATION_TOLERANCE_CENTS,
+} from '../utils/sampleEvaluation';
 import { savePracticeSession, fetchPracticeSessions } from '../../../services/pocketbase';
-
-/** Folds a raw signed cents value to its nearest octave-equivalent, in range [-600, 600). */
-function foldCents(rawCents: number): number {
-  return (((rawCents + 600) % 1200) + 1200) % 1200 - 600;
-}
 
 // How many times per second the scoring sampler checks "is the right note playing right now".
 // Configurable via VITE_SAMPLE_RATE so it can be tuned per environment without a code change.
 const SAMPLES_PER_SECOND = Number(import.meta.env.VITE_SAMPLE_RATE) || 10;
-
-const STALE_PITCH_MS = 150; // no fresh mic detection within this window = "not playing"
 
 interface UsePracticeSessionArgs {
   currentExercise: Exercise;
@@ -45,6 +44,16 @@ export function usePracticeSession({ currentExercise, bpm, transpose }: UsePract
   const [lastFinishedSession, setLastFinishedSession] = useState<PracticeSession | null>(null);
   const [lastSessionSamples, setLastSessionSamples] = useState<ScoreSample[]>([]);
 
+  // Scoring tunables, exposed so a dev panel can adjust them live (even mid-session)
+  // to see the effect on the pitch-accuracy sampler without a code change.
+  const [releaseWindowFraction, setReleaseWindowFraction] = useState(DEFAULT_RELEASE_WINDOW_FRACTION);
+  const [stalePitchMs, setStalePitchMs] = useState(DEFAULT_STALE_PITCH_MS);
+  const [intonationToleranceCents, setIntonationToleranceCents] = useState(DEFAULT_INTONATION_TOLERANCE_CENTS);
+  const releaseWindowFractionRef = useRef(releaseWindowFraction);
+  const stalePitchMsRef = useRef(stalePitchMs);
+  useEffect(() => { releaseWindowFractionRef.current = releaseWindowFraction; }, [releaseWindowFraction]);
+  useEffect(() => { stalePitchMsRef.current = stalePitchMs; }, [stalePitchMs]);
+
   useEffect(() => {
     fetchPracticeSessions().then(setSessions);
   }, []);
@@ -62,14 +71,10 @@ export function usePracticeSession({ currentExercise, bpm, transpose }: UsePract
   useEffect(() => { transposeRef.current = transpose; }, [transpose]);
 
   const practiceStartTimeRef = useRef<number | null>(null);
-  const correctSamplesRef = useRef(0);
-  const totalSamplesRef = useRef(0);
   const sampleLogRef = useRef<ScoreSample[]>([]);
 
   const resetPracticeCounters = useCallback(() => {
     practiceStartTimeRef.current = Date.now();
-    correctSamplesRef.current = 0;
-    totalSamplesRef.current = 0;
     sampleLogRef.current = [];
     currentBeatIndexRef.current = 0;
     lastBeatTimeRef.current = Date.now();
@@ -88,10 +93,10 @@ export function usePracticeSession({ currentExercise, bpm, transpose }: UsePract
     if (!startTime) return;
 
     const durationSeconds = Math.max(1, Math.round((Date.now() - startTime) / 1000));
-    const totalSamples = totalSamplesRef.current;
-    const score = totalSamples > 0
-      ? Math.round((correctSamplesRef.current / totalSamples) * 100)
-      : 0;
+    const { noteAccuracy, intonationAccuracy } = computeAccuracyScores(
+      sampleLogRef.current,
+      intonationToleranceCents
+    );
 
     setLastSessionSamples(sampleLogRef.current);
 
@@ -100,13 +105,14 @@ export function usePracticeSession({ currentExercise, bpm, transpose }: UsePract
       exerciseTitle: currentExercise.title,
       bpm,
       durationSeconds,
-      score,
+      score: noteAccuracy,
+      intonationScore: intonationAccuracy,
       timestamp: new Date().toISOString(),
     });
 
     setLastFinishedSession(newSession);
     setSessions((prev) => [newSession, ...prev]);
-  }, [currentExercise.id, currentExercise.title, bpm]);
+  }, [currentExercise.id, currentExercise.title, bpm, intonationToleranceCents]);
 
   const handleTogglePlay = useCallback(() => {
     if (isPlaying || isCountInActive) {
@@ -173,37 +179,20 @@ export function usePracticeSession({ currentExercise, bpm, transpose }: UsePract
       const currentBeatPosition = currentBeatIndexRef.current + beatFraction;
 
       const activeNote = findActiveNote(timeline, currentBeatPosition);
-
       const played = audioEngine.getLastDetectedPitch();
-      const isFresh = played !== null && Date.now() - played.timestamp <= STALE_PITCH_MS;
-      const playedLetter = isFresh ? noteLetter(played!.note) : null;
-
       const elapsedSeconds = (Date.now() - (practiceStartTimeRef.current ?? Date.now())) / 1000;
 
-      totalSamplesRef.current += 1;
+      const sample = evaluateSample({
+        activeNote,
+        elapsedBeats: currentBeatPosition,
+        played,
+        transpose: transposeRef.current,
+        elapsedSeconds,
+        stalePitchMs: stalePitchMsRef.current,
+        releaseWindowFraction: releaseWindowFractionRef.current,
+      });
 
-      if (activeNote) {
-        const requestedNoteName = midiHalfToneToNoteName(activeNote.halfTone + transposeRef.current);
-        const requestedLetter = noteLetter(requestedNoteName);
-        const isCorrect = playedLetter === requestedLetter;
-        if (isCorrect) correctSamplesRef.current += 1;
-
-        const centsOff = isFresh
-          ? foldCents(1200 * Math.log2(played!.frequency / noteToFrequency(requestedNoteName)))
-          : null;
-
-        // The chart labels the note as printed on the sheet (pre-transpose), not the
-        // transposed pitch that's actually supposed to sound.
-        const sheetNoteName = midiHalfToneToNoteName(activeNote.halfTone);
-
-        sampleLogRef.current.push({ t: elapsedSeconds, isRest: false, isCorrect, centsOff, expectedNote: sheetNoteName });
-      } else {
-        // Resting: correct means staying silent, any detected pitch is a false entry.
-        const isCorrect = playedLetter === null;
-        if (isCorrect) correctSamplesRef.current += 1;
-
-        sampleLogRef.current.push({ t: elapsedSeconds, isRest: true, isCorrect, centsOff: null, expectedNote: null });
-      }
+      sampleLogRef.current.push(sample);
     }, 1000 / SAMPLES_PER_SECOND);
 
     return () => window.clearInterval(intervalId);
@@ -261,6 +250,12 @@ export function usePracticeSession({ currentExercise, bpm, transpose }: UsePract
     resetForExercise,
     dismissFinishedSession,
     clearSessions,
+    releaseWindowFraction,
+    setReleaseWindowFraction,
+    stalePitchMs,
+    setStalePitchMs,
+    intonationToleranceCents,
+    setIntonationToleranceCents,
   };
 }
 

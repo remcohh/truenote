@@ -2,6 +2,7 @@ import { useState } from "react";
 import { MusicSheetViewer } from "./MusicSheetViewer";
 import { MetronomeControls } from "./MetronomeControls";
 import { PitchDetector } from "./PitchDetector";
+import { ScoringTuningPanel } from "./ScoringTuningPanel";
 import { Modal } from "../../../components/Modal";
 import type { Exercise } from "../../../types";
 import type { PracticeSessionApi } from "../hooks/usePracticeSession";
@@ -35,6 +36,7 @@ export function PracticeView({
 }: PracticeViewProps) {
   const [showMetronomeModal, setShowMetronomeModal] = useState(false);
   const [showPitchTunerModal, setShowPitchTunerModal] = useState(false);
+  const [showScoringTuningModal, setShowScoringTuningModal] = useState(false);
 
   const isPlaying = practice.isPlaying || practice.isCountInActive;
 
@@ -101,6 +103,7 @@ export function PracticeView({
           onTogglePlay={practice.handleTogglePlay}
           onOpenMetronome={() => setShowMetronomeModal(true)}
           onOpenPitchTuner={() => setShowPitchTunerModal(true)}
+          onOpenScoringTuner={() => setShowScoringTuningModal(true)}
         />
       </div>
 
@@ -122,6 +125,17 @@ export function PracticeView({
 
       <Modal open={showPitchTunerModal} onClose={() => setShowPitchTunerModal(false)}>
         <PitchDetector currentTargetNote={practice.currentTargetNote} />
+      </Modal>
+
+      <Modal open={showScoringTuningModal} onClose={() => setShowScoringTuningModal(false)}>
+        <ScoringTuningPanel
+          releaseWindowFraction={practice.releaseWindowFraction}
+          onReleaseWindowFractionChange={practice.setReleaseWindowFraction}
+          stalePitchMs={practice.stalePitchMs}
+          onStalePitchMsChange={practice.setStalePitchMs}
+          intonationToleranceCents={practice.intonationToleranceCents}
+          onIntonationToleranceCentsChange={practice.setIntonationToleranceCents}
+        />
       </Modal>
     </div>
   );

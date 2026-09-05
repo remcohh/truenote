@@ -175,7 +175,9 @@ export const MetronomeControls: React.FC<MetronomeControlsProps> = ({
               <button
                 key={preset}
                 onClick={() => onBpmChange(preset)}
-                className={`px-2.5 py-1 rounded-lg text-xs font-mono font-extrabold transition ${
+                disabled={isPlaying}
+                title={isPlaying ? 'Stop the session to change tempo' : undefined}
+                className={`px-2.5 py-1 rounded-lg text-xs font-mono font-extrabold transition disabled:opacity-40 disabled:cursor-not-allowed ${
                   bpm === preset
                     ? 'bg-teal-700 text-white dark:bg-teal-400 dark:text-slate-950 shadow-sm'
                     : 'bg-slate-300/80 dark:bg-slate-800 text-slate-900 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-700'
@@ -186,7 +188,9 @@ export const MetronomeControls: React.FC<MetronomeControlsProps> = ({
             ))}
             <button
               onClick={handleTapTempo}
-              className="px-3 py-1 rounded-lg text-xs bg-indigo-100 dark:bg-indigo-600/30 text-indigo-800 dark:text-indigo-300 border border-indigo-300 dark:border-indigo-500/30 hover:bg-indigo-200 dark:hover:bg-indigo-600/50 font-extrabold transition"
+              disabled={isPlaying}
+              title={isPlaying ? 'Stop the session to change tempo' : undefined}
+              className="px-3 py-1 rounded-lg text-xs bg-indigo-100 dark:bg-indigo-600/30 text-indigo-800 dark:text-indigo-300 border border-indigo-300 dark:border-indigo-500/30 hover:bg-indigo-200 dark:hover:bg-indigo-600/50 font-extrabold transition disabled:opacity-40 disabled:cursor-not-allowed"
             >
               TAP
             </button>
@@ -200,7 +204,9 @@ export const MetronomeControls: React.FC<MetronomeControlsProps> = ({
           max="240"
           value={bpm}
           onChange={(e) => onBpmChange(parseInt(e.target.value, 10))}
-          className="w-full h-2 bg-slate-300 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-teal-600 dark:accent-teal-400"
+          disabled={isPlaying}
+          title={isPlaying ? 'Stop the session to change tempo' : undefined}
+          className="w-full h-2 bg-slate-300 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-teal-600 dark:accent-teal-400 disabled:opacity-40 disabled:cursor-not-allowed"
         />
 
         {/* Beat Lights */}

@@ -102,6 +102,7 @@ function toPracticeLogPayload(session: Omit<PracticeSession, 'id' | 'syncedToPoc
     bpm: session.bpm,
     duration_seconds: session.durationSeconds,
     score: session.score,
+    intonation_score: session.intonationScore,
     timestamp: session.timestamp,
   };
 }
@@ -163,6 +164,7 @@ export async function fetchPracticeSessions(): Promise<PracticeSession[]> {
         bpm: rec.bpm || 120,
         durationSeconds: rec.duration_seconds || 0,
         score: rec.score || 0,
+        intonationScore: rec.intonation_score || 0,
         timestamp: rec.timestamp || rec.created,
         syncedToPocketBase: true,
       }));

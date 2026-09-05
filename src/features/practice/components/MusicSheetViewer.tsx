@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { OpenSheetMusicDisplay } from 'opensheetmusicdisplay';
-import { ZoomIn, ZoomOut, RotateCcw, ChevronLeft, ChevronRight, Eye, Maximize2, Minimize2, Play, Square, Timer, Mic } from 'lucide-react';
+import { ZoomIn, ZoomOut, RotateCcw, ChevronLeft, ChevronRight, Eye, Maximize2, Minimize2, Play, Square, Timer, Mic, SlidersHorizontal } from 'lucide-react';
 import { buildBeatStepMap } from '../utils/beatMapGenerator';
 import { buildNoteTimeline, type NoteTimelineEntry } from '../utils/noteTimelineGenerator';
 import { getCurrentTargetPitch } from '../utils/noteParser';
@@ -24,6 +24,7 @@ interface MusicSheetViewerProps {
   onTogglePlay?: () => void;
   onOpenMetronome?: () => void;
   onOpenPitchTuner?: () => void;
+  onOpenScoringTuner?: () => void;
 }
 
 export const MusicSheetViewer: React.FC<MusicSheetViewerProps> = ({
@@ -43,6 +44,7 @@ export const MusicSheetViewer: React.FC<MusicSheetViewerProps> = ({
   onTogglePlay,
   onOpenMetronome,
   onOpenPitchTuner,
+  onOpenScoringTuner,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const osmdRef = useRef<OpenSheetMusicDisplay | null>(null);
@@ -107,7 +109,7 @@ export const MusicSheetViewer: React.FC<MusicSheetViewerProps> = ({
       onTotalBeatsDetected(result.map.length);
     }
     if (onNoteTimelineBuilt) {
-      onNoteTimelineBuilt(buildNoteTimeline(osmdRef.current));
+      onNoteTimelineBuilt(buildNoteTimeline(osmdRef.current, bpm));
     }
   };
 
@@ -212,6 +214,15 @@ export const MusicSheetViewer: React.FC<MusicSheetViewerProps> = ({
       renderAndRefreshCursor();
     }
   }, [transpose]);
+
+  // Note timeline's startTime/endTime are only valid for the bpm they were built with,
+  // so rebuild it whenever bpm changes. Tempo controls are disabled during a session,
+  // so in practice this only re-runs between sessions, never mid-practice.
+  useEffect(() => {
+    if (osmdRef.current && !loading && beatStepMapRef.current.length > 0 && onNoteTimelineBuilt) {
+      onNoteTimelineBuilt(buildNoteTimeline(osmdRef.current, bpm));
+    }
+  }, [bpm]);
 
   // Synchronized Master Clock: Map metronome beats directly to beatStepMap note entries
   useEffect(() => {
@@ -435,6 +446,13 @@ export const MusicSheetViewer: React.FC<MusicSheetViewerProps> = ({
               title="Pitch Tuner"
             >
               <Mic size={15} />
+            </button>
+            <button
+              onClick={onOpenScoringTuner}
+              className="p-1 rounded-lg text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-slate-800 transition ml-1"
+              title="Scoring Tuning"
+            >
+              <SlidersHorizontal size={15} />
             </button>
           </div>
         </div>

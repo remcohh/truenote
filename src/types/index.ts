@@ -17,7 +17,8 @@ export interface PracticeSession {
   exerciseTitle: string;
   bpm: number;
   durationSeconds: number;
-  score: number; // 0 to 100%
+  score: number; // note accuracy, 0 to 100% — right note sounding, any tuning within the nearest-note range
+  intonationScore: number; // 0 to 100% — of the correctly-played notes, how many were tightly in tune
   timestamp: string;
   syncedToPocketBase?: boolean;
 }

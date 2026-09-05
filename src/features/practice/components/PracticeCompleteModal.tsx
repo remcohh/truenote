@@ -29,7 +29,8 @@ export const PracticeCompleteModal: React.FC<PracticeCompleteModalProps> = ({
     return { label: 'Keep Practicing!', color: 'text-rose-500 bg-rose-500/10 border-rose-500/30' };
   };
 
-  const grade = getGradeInfo(session.score);
+  const noteGrade = getGradeInfo(session.score);
+  const intonationGrade = getGradeInfo(session.intonationScore);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md animate-in fade-in duration-200">
@@ -70,17 +71,32 @@ export const PracticeCompleteModal: React.FC<PracticeCompleteModalProps> = ({
 
         {/* Performance Metrics Grid */}
         <div className="grid grid-cols-2 gap-3 mb-6">
-          {/* Accuracy Score Card */}
-          <div className="col-span-2 p-4 bg-slate-50 dark:bg-slate-900/60 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 text-center relative overflow-hidden">
+          {/* Note Accuracy Score Card */}
+          <div className="p-4 bg-slate-50 dark:bg-slate-900/60 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 text-center relative overflow-hidden">
             <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-              Pitch Tuner Accuracy
+              Note Accuracy
             </span>
-            <div className="flex items-baseline justify-center gap-2 mt-1">
+            <div className="flex flex-col items-center gap-1 mt-1">
               <span className="text-4xl font-extrabold text-teal-600 dark:text-teal-400 tracking-tight font-mono">
                 {session.score}%
               </span>
-              <span className={`text-xs font-extrabold px-2.5 py-0.5 rounded-full border ${grade.color}`}>
-                {grade.label}
+              <span className={`text-xs font-extrabold px-2.5 py-0.5 rounded-full border ${noteGrade.color}`}>
+                {noteGrade.label}
+              </span>
+            </div>
+          </div>
+
+          {/* Intonation Accuracy Score Card */}
+          <div className="p-4 bg-slate-50 dark:bg-slate-900/60 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 text-center relative overflow-hidden">
+            <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              Intonation Accuracy
+            </span>
+            <div className="flex flex-col items-center gap-1 mt-1">
+              <span className="text-4xl font-extrabold text-indigo-600 dark:text-indigo-400 tracking-tight font-mono">
+                {session.intonationScore}%
+              </span>
+              <span className={`text-xs font-extrabold px-2.5 py-0.5 rounded-full border ${intonationGrade.color}`}>
+                {intonationGrade.label}
               </span>
             </div>
           </div>

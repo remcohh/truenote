@@ -1,6 +1,6 @@
 import React from 'react';
 import type { PracticeSession } from '../../../types';
-import { Clock, Trophy, Flame, Database, Trash2, CheckCircle2, Zap, Calendar } from 'lucide-react';
+import { Clock, Trophy, Flame, Database, Trash2, CheckCircle2, Zap, Calendar, Target } from 'lucide-react';
 import { StatTile } from '../../../components/StatTile';
 
 interface PracticeStatsProps {
@@ -15,11 +15,15 @@ export const PracticeStats: React.FC<PracticeStatsProps> = ({ sessions, onClearS
     sessions.length > 0
       ? Math.round(sessions.reduce((acc, s) => acc + s.score, 0) / sessions.length)
       : 0;
+  const avgIntonationScore =
+    sessions.length > 0
+      ? Math.round(sessions.reduce((acc, s) => acc + (s.intonationScore || 0), 0) / sessions.length)
+      : 0;
 
   return (
     <div className="practice-stats-container flex flex-col gap-6">
       {/* Top Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatTile
           icon={<Clock size={22} />}
           iconColorClass="bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-100 dark:border-indigo-500/20"
@@ -36,9 +40,16 @@ export const PracticeStats: React.FC<PracticeStatsProps> = ({ sessions, onClearS
         <StatTile
           icon={<Trophy size={22} />}
           iconColorClass="bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-100 dark:border-amber-500/20"
-          label="Avg Accuracy"
+          label="Avg Note Accuracy"
           value={`${avgScore}%`}
           valueColorClass="text-teal-600 dark:text-teal-400"
+        />
+        <StatTile
+          icon={<Target size={22} />}
+          iconColorClass="bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-100 dark:border-indigo-500/20"
+          label="Avg Intonation"
+          value={`${avgIntonationScore}%`}
+          valueColorClass="text-indigo-600 dark:text-indigo-400"
         />
       </div>
 
@@ -91,7 +102,7 @@ export const PracticeStats: React.FC<PracticeStatsProps> = ({ sessions, onClearS
                   </div>
                 </div>
 
-                {/* Score & PocketBase Sync Badge */}
+                {/* Scores & PocketBase Sync Badge */}
                 <div className="flex items-center gap-3 self-end sm:self-center">
                   <span
                     className={`text-xs font-bold font-mono px-3 py-1 rounded-full border ${
@@ -102,7 +113,19 @@ export const PracticeStats: React.FC<PracticeStatsProps> = ({ sessions, onClearS
                         : 'bg-rose-50 text-rose-700 border-rose-200/80 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/30'
                     }`}
                   >
-                    {session.score}% accuracy
+                    {session.score}% notes
+                  </span>
+
+                  <span
+                    className={`text-xs font-bold font-mono px-3 py-1 rounded-full border ${
+                      (session.intonationScore || 0) >= 85
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200/80 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/30'
+                        : (session.intonationScore || 0) >= 60
+                        ? 'bg-amber-50 text-amber-700 border-amber-200/80 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/30'
+                        : 'bg-rose-50 text-rose-700 border-rose-200/80 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/30'
+                    }`}
+                  >
+                    {session.intonationScore || 0}% tuning
                   </span>
 
                   <span
