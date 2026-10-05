@@ -31,13 +31,6 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({
 
   const categories = ['All', 'Scales', 'Arpeggios', 'Classical', 'Rhythm', 'Custom'];
 
-  const CATEGORY_BADGE_STYLES: Record<string, string> = {
-    Scales: 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20',
-    Arpeggios: 'bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-500/20',
-    Classical: 'bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20',
-  };
-  const DEFAULT_BADGE_STYLE = 'bg-teal-50 dark:bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-200 dark:border-teal-500/20';
-
   const filtered = allExercises.filter((ex) => {
     const matchesCategory = activeCategory === 'All' || ex.category === activeCategory;
     const matchesSearch =
@@ -95,15 +88,15 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({
       {/* Header & Filter Bar */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         {/* Category Tabs */}
-        <div className="flex flex-wrap gap-1.5 bg-slate-100/90 dark:bg-slate-900/80 p-1 rounded-xl border border-slate-200 dark:border-slate-800">
+        <div className="flex flex-wrap gap-1 bg-slate-100 dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-800">
           {categories.map((cat) => (
             <button
               key={cat}
               onClick={() => setActiveCategory(cat)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 ${
+              className={`px-3 py-1.5 rounded-lg text-xs transition-all duration-150 ${
                 activeCategory === cat
-                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-800'
+                  ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 shadow-xs font-semibold'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 font-medium'
               }`}
             >
               {cat}
@@ -120,13 +113,13 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({
               placeholder="Search exercises..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-8 pr-3 py-1.5 bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-indigo-500 shadow-sm w-44"
+              className="pl-8 pr-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-slate-400 dark:focus:border-slate-600 shadow-xs w-44"
             />
           </div>
 
           <button
             onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-teal-600 hover:bg-teal-500 text-white rounded-xl text-xs font-bold transition shadow-md shadow-teal-600/20"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 dark:bg-slate-100 dark:hover:bg-white text-white dark:text-slate-900 rounded-xl text-xs font-medium transition shadow-xs"
           >
             <Upload size={14} /> Upload XML
           </button>
@@ -141,31 +134,27 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({
             <div
               key={ex.id}
               onClick={() => onSelectExercise(ex)}
-              className={`p-4 rounded-2xl border cursor-pointer transition-all duration-200 flex flex-col justify-between gap-3 ${
+              className={`p-4 rounded-xl border cursor-pointer transition-all duration-150 flex flex-col justify-between gap-3 ${
                 isSelected
-                  ? 'bg-indigo-50/90 dark:bg-indigo-950/40 border-indigo-500 text-slate-900 dark:text-white shadow-md shadow-indigo-500/10 ring-1 ring-indigo-500'
-                  : 'bg-white dark:bg-slate-900/50 hover:bg-slate-50 dark:hover:bg-slate-900 border-slate-200/90 dark:border-slate-800/80 text-slate-800 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700 shadow-sm'
+                  ? 'bg-slate-50 dark:bg-slate-900 border-slate-900 dark:border-slate-100 text-slate-900 dark:text-white shadow-xs ring-1 ring-slate-900 dark:ring-slate-100'
+                  : 'bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-850 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700 shadow-xs'
               }`}
             >
               <div>
                 <div className="flex items-center justify-between gap-2 mb-2">
-                  <span
-                    className={`text-[10px] font-extrabold px-2 py-0.5 rounded-md uppercase tracking-wider ${
-                      CATEGORY_BADGE_STYLES[ex.category] ?? DEFAULT_BADGE_STYLE
-                    }`}
-                  >
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md uppercase tracking-wider bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700/60">
                     {ex.category}
                   </span>
-                  {isSelected && <Check size={16} className="text-indigo-600 dark:text-indigo-400" />}
+                  {isSelected && <Check size={16} className="text-slate-900 dark:text-slate-100" />}
                 </div>
 
-                <h4 className="font-bold text-sm text-slate-900 dark:text-slate-100">{ex.title}</h4>
+                <h4 className="font-semibold text-sm text-slate-900 dark:text-slate-100">{ex.title}</h4>
                 <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mt-1">{ex.description}</p>
               </div>
 
               <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 font-mono pt-2.5 border-t border-slate-100 dark:border-slate-800/60">
-                <span className="font-semibold text-teal-600 dark:text-teal-400">⚡ {ex.defaultBpm} BPM</span>
-                <span className="font-semibold text-slate-400 dark:text-slate-500">{ex.difficulty}</span>
+                <span className="font-medium text-slate-700 dark:text-slate-300">{ex.defaultBpm} BPM</span>
+                <span className="font-medium text-slate-400 dark:text-slate-500">{ex.difficulty}</span>
               </div>
             </div>
           );

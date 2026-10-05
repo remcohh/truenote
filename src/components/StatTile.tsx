@@ -4,8 +4,8 @@ type StatTileSize = 'sm' | 'lg';
 
 interface StatTileProps {
   icon: ReactNode;
-  /** Full class string for the icon's colored wrapper box (bg/text/border colors). */
-  iconColorClass: string;
+  /** Full class string for the icon's wrapper box (bg/text/border colors). */
+  iconColorClass?: string;
   label: string;
   value: ReactNode;
   unit?: string;
@@ -21,7 +21,7 @@ const WRAPPER_CLASSES: Record<StatTileSize, string> = {
 
 const ICON_WRAPPER_CLASSES: Record<StatTileSize, string> = {
   lg: 'p-3.5 rounded-2xl border',
-  sm: 'p-2.5 rounded-xl',
+  sm: 'p-2.5 rounded-xl border',
 };
 
 const LABEL_CLASSES: Record<StatTileSize, string> = {
@@ -42,7 +42,7 @@ const UNIT_CLASSES: Record<StatTileSize, string> = {
 /** Icon + label + value tile used on stat/summary screens. */
 export function StatTile({
   icon,
-  iconColorClass,
+  iconColorClass = 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700',
   label,
   value,
   unit,

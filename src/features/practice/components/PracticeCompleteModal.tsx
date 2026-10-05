@@ -37,10 +37,10 @@ export const PracticeCompleteModal: React.FC<PracticeCompleteModalProps> = ({
 
   // Grade classification helper
   const getGradeInfo = (score: number) => {
-    if (score >= 90) return { label: 'Outstanding!', color: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/30' };
-    if (score >= 75) return { label: 'Great Job!', color: 'text-teal-500 bg-teal-500/10 border-teal-500/30' };
-    if (score >= 60) return { label: 'Good Effort!', color: 'text-amber-500 bg-amber-500/10 border-amber-500/30' };
-    return { label: 'Keep Practicing!', color: 'text-rose-500 bg-rose-500/10 border-rose-500/30' };
+    if (score >= 90) return { label: 'Outstanding!', color: 'text-slate-900 dark:text-slate-100 bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700' };
+    if (score >= 75) return { label: 'Great Job!', color: 'text-slate-800 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700' };
+    if (score >= 60) return { label: 'Good Effort!', color: 'text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700' };
+    return { label: 'Keep Practicing!', color: 'text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700' };
   };
 
   const noteGrade = getGradeInfo(session.score);
@@ -59,22 +59,15 @@ export const PracticeCompleteModal: React.FC<PracticeCompleteModalProps> = ({
       <div className="max-w-6xl w-full mx-auto px-8 sm:px-10 pt-16 pb-10">
 
         {/* Celebration Trophy Badge */}
-        <div className="relative w-20 h-20 mx-auto mb-5 flex items-center justify-center">
-          <div className="absolute inset-0 rounded-3xl bg-gradient-to-tr from-amber-400 via-teal-500 to-indigo-600 blur-lg opacity-40 animate-pulse" />
-          <div className="w-full h-full rounded-2xl bg-gradient-to-tr from-amber-500 via-teal-500 to-indigo-600 p-0.5 shadow-xl shadow-teal-500/20 relative">
-            <div className="w-full h-full bg-white dark:bg-slate-950 rounded-[14px] flex items-center justify-center text-amber-500 dark:text-amber-400">
-              <Trophy size={36} />
-            </div>
-          </div>
+        <div className="w-16 h-16 mx-auto mb-5 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-800 dark:text-slate-100 shadow-sm">
+          <Trophy size={32} />
         </div>
 
         {/* Headline & Title */}
         <div className="text-center mb-6">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-extrabold uppercase tracking-wider mb-2.5 shadow-sm">
-            <Sparkles size={13} className="text-amber-500" />
-            <span className="bg-gradient-to-r from-teal-600 to-indigo-600 bg-clip-text text-transparent">
-              Practice Complete
-            </span>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-slate-200 dark:border-slate-800 text-xs font-semibold uppercase tracking-wider mb-2.5 bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-400 shadow-xs">
+            <Sparkles size={13} className="text-slate-500 dark:text-slate-400" />
+            <span>Practice Complete</span>
           </div>
           <h3 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
             Session Recorded!
@@ -92,10 +85,10 @@ export const PracticeCompleteModal: React.FC<PracticeCompleteModalProps> = ({
               Note Accuracy
             </span>
             <div className="flex flex-col items-center gap-1 mt-1">
-              <span className="text-4xl font-extrabold text-teal-600 dark:text-teal-400 tracking-tight font-mono">
+              <span className="text-4xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight font-mono">
                 {session.score}%
               </span>
-              <span className={`text-xs font-extrabold px-2.5 py-0.5 rounded-full border ${noteGrade.color}`}>
+              <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-md border ${noteGrade.color}`}>
                 {noteGrade.label}
               </span>
             </div>
@@ -107,10 +100,10 @@ export const PracticeCompleteModal: React.FC<PracticeCompleteModalProps> = ({
               Intonation Accuracy
             </span>
             <div className="flex flex-col items-center gap-1 mt-1">
-              <span className="text-4xl font-extrabold text-indigo-600 dark:text-indigo-400 tracking-tight font-mono">
+              <span className="text-4xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight font-mono">
                 {session.intonationScore}%
               </span>
-              <span className={`text-xs font-extrabold px-2.5 py-0.5 rounded-full border ${intonationGrade.color}`}>
+              <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-md border ${intonationGrade.color}`}>
                 {intonationGrade.label}
               </span>
             </div>
@@ -119,7 +112,6 @@ export const PracticeCompleteModal: React.FC<PracticeCompleteModalProps> = ({
           <StatTile
             size="sm"
             icon={<Activity size={18} />}
-            iconColorClass="bg-indigo-500/10 text-indigo-600 dark:text-indigo-400"
             label="Tempo"
             value={session.bpm}
             unit="BPM"
@@ -127,7 +119,6 @@ export const PracticeCompleteModal: React.FC<PracticeCompleteModalProps> = ({
           <StatTile
             size="sm"
             icon={<Clock size={18} />}
-            iconColorClass="bg-teal-500/10 text-teal-600 dark:text-teal-400"
             label="Time"
             value={`${session.durationSeconds}s`}
           />
@@ -140,7 +131,7 @@ export const PracticeCompleteModal: React.FC<PracticeCompleteModalProps> = ({
         <SampleFrequencyChart samples={samples} />
 
         {/* Sync Indicator Pill */}
-        <div className="flex items-center justify-center gap-2 py-2 px-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-xl text-xs font-semibold mb-6">
+        <div className="flex items-center justify-center gap-2 py-2 px-3 bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold mb-6">
           <CheckCircle2 size={14} /> Saved & Synced to Practice Log
         </div>
 
@@ -157,7 +148,7 @@ export const PracticeCompleteModal: React.FC<PracticeCompleteModalProps> = ({
               onClose();
               onViewStats();
             }}
-            className="flex-1 py-3 px-4 bg-gradient-to-r from-indigo-600 to-teal-500 hover:from-indigo-500 hover:to-teal-400 text-white font-bold text-xs rounded-xl transition shadow-md shadow-indigo-600/20 flex items-center justify-center gap-2"
+            className="flex-1 py-3 px-4 bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 font-bold text-xs rounded-xl transition shadow-sm flex items-center justify-center gap-2"
           >
             <BarChart3 size={15} /> View Full Stats
           </button>

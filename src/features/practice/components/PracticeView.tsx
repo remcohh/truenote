@@ -49,7 +49,7 @@ export function PracticeView({
       <div className="flex flex-wrap items-center justify-between gap-3 bg-white/80 dark:bg-slate-900/60 p-4 sm:p-5 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-sm">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-[11px] font-extrabold text-teal-600 dark:text-teal-400 uppercase tracking-wider">
+            <span className="text-[11px] font-extrabold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
               {currentExercise.category}
             </span>
             <span className="text-slate-300 dark:text-slate-700">•</span>
@@ -66,13 +66,13 @@ export function PracticeView({
       <div className="relative">
         {/* Count-In Translucent Overlay */}
         {practice.isCountInActive && (
-          <div className="absolute top-3 right-3 z-40 bg-slate-900/40 dark:bg-slate-950/60 backdrop-blur-md text-white px-4 py-2 rounded-xl shadow-lg flex items-center gap-3 animate-in fade-in zoom-in-95 border border-white/20">
-            <div className="w-8 h-8 rounded-lg bg-teal-500/30 backdrop-blur-md flex items-center justify-center text-lg font-black font-mono border border-teal-300/40 text-teal-200">
+          <div className="absolute top-3 right-3 z-40 bg-slate-900/90 text-white px-4 py-2.5 rounded-xl shadow-lg flex items-center gap-3 animate-in fade-in zoom-in-95 border border-slate-700">
+            <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-lg font-black font-mono border border-slate-700 text-white">
               {practice.countInBeat}
             </div>
             <div>
-              <h4 className="font-bold text-xs uppercase tracking-wider text-teal-200">Count-In</h4>
-              <p className="text-[11px] text-slate-200 font-medium">Ready on 1...</p>
+              <h4 className="font-bold text-xs uppercase tracking-wider text-slate-300">Count-In</h4>
+              <p className="text-[11px] text-slate-400 font-medium">Ready on 1...</p>
             </div>
             <div className="flex items-center gap-1.5 ml-2">
               {[4, 3, 2, 1].map((beatNum) => (
@@ -80,8 +80,8 @@ export function PracticeView({
                   key={beatNum}
                   className={`w-2.5 h-2.5 rounded-full transition-all duration-150 ${
                     practice.countInBeat === beatNum
-                      ? "bg-teal-400 scale-125 shadow-md shadow-teal-400/50 ring-2 ring-teal-300/40"
-                      : "bg-white/25"
+                      ? "bg-white scale-125 shadow-sm"
+                      : "bg-slate-700"
                   }`}
                 />
               ))}

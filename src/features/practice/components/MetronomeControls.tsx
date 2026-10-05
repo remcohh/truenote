@@ -94,7 +94,6 @@ export const MetronomeControls: React.FC<MetronomeControlsProps> = ({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <CardHeader
           icon={isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
-          iconColorClass="bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 dark:border-indigo-500/30"
           title="Metronome & Options"
           subtitle="Tempo & count-in controls"
         />
@@ -102,10 +101,10 @@ export const MetronomeControls: React.FC<MetronomeControlsProps> = ({
         {/* Play/Stop Button */}
         <button
           onClick={onTogglePlay}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs tracking-wide uppercase transition-all duration-200 shadow-md ${
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs tracking-wide uppercase transition-all duration-200 shadow-sm ${
             isPlaying
-              ? 'bg-rose-500 hover:bg-rose-600 text-white shadow-rose-500/25 animate-soft-pulse'
-              : 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-emerald-600/25'
+              ? 'bg-rose-600 hover:bg-rose-700 text-white'
+              : 'bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:hover:bg-slate-100 dark:text-slate-900'
           }`}
         >
           {isPlaying ? (
@@ -127,16 +126,16 @@ export const MetronomeControls: React.FC<MetronomeControlsProps> = ({
           onClick={onToggleMute}
           className={`flex items-center justify-between px-3 py-2 rounded-xl border text-xs font-bold transition ${
             !isMuted
-              ? 'bg-indigo-50 dark:bg-indigo-950/40 border-indigo-300 dark:border-indigo-500/40 text-indigo-800 dark:text-indigo-300 shadow-xs'
+              ? 'bg-slate-900 dark:bg-white border-slate-900 dark:border-white text-white dark:text-slate-900 shadow-xs'
               : 'bg-slate-100 dark:bg-slate-900 border-slate-300 dark:border-slate-800 text-slate-500 dark:text-slate-400 opacity-80'
           }`}
           title="Toggle sounding metronome click during practice"
         >
           <div className="flex items-center gap-1.5">
-            {!isMuted ? <Volume2 size={14} className="text-indigo-600 dark:text-indigo-400" /> : <VolumeX size={14} />}
+            <Volume2 size={14} />
             <span>Click Sound</span>
           </div>
-          <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono font-extrabold ${!isMuted ? 'bg-indigo-200 dark:bg-indigo-900/60 text-indigo-900 dark:text-indigo-200' : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400'}`}>
+          <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono font-extrabold ${!isMuted ? 'bg-slate-800 dark:bg-slate-100 text-slate-200 dark:text-slate-900' : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400'}`}>
             {!isMuted ? 'ON' : 'MUTED'}
           </span>
         </button>
@@ -146,16 +145,16 @@ export const MetronomeControls: React.FC<MetronomeControlsProps> = ({
           onClick={onToggleCountIn}
           className={`flex items-center justify-between px-3 py-2 rounded-xl border text-xs font-bold transition ${
             isCountInEnabled
-              ? 'bg-teal-50 dark:bg-teal-950/40 border-teal-300 dark:border-teal-500/40 text-teal-800 dark:text-teal-300 shadow-xs'
+              ? 'bg-slate-900 dark:bg-white border-slate-900 dark:border-white text-white dark:text-slate-900 shadow-xs'
               : 'bg-slate-100 dark:bg-slate-900 border-slate-300 dark:border-slate-800 text-slate-500 dark:text-slate-400 opacity-80'
           }`}
           title="Toggle 1-bar count-in before session starts"
         >
           <div className="flex items-center gap-1.5">
-            <Timer size={14} className={isCountInEnabled ? 'text-teal-600 dark:text-teal-400' : ''} />
+            <Timer size={14} />
             <span>Count-In</span>
           </div>
-          <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono font-extrabold ${isCountInEnabled ? 'bg-teal-200 dark:bg-teal-900/60 text-teal-900 dark:text-teal-200' : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400'}`}>
+          <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono font-extrabold ${isCountInEnabled ? 'bg-slate-800 dark:bg-slate-100 text-slate-200 dark:text-slate-900' : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400'}`}>
             {isCountInEnabled ? '1 BAR' : 'OFF'}
           </span>
         </button>
@@ -165,7 +164,7 @@ export const MetronomeControls: React.FC<MetronomeControlsProps> = ({
       <div className="bg-slate-200/70 dark:bg-slate-900/60 p-4 rounded-xl border border-slate-300 dark:border-slate-800 flex flex-col gap-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-baseline gap-2">
-            <span className="text-4xl font-extrabold text-teal-700 dark:text-teal-400 font-mono tracking-tight">{bpm}</span>
+            <span className="text-4xl font-extrabold text-slate-900 dark:text-slate-100 font-mono tracking-tight">{bpm}</span>
             <span className="text-xs text-slate-700 dark:text-slate-400 font-extrabold uppercase tracking-wider">BPM</span>
           </div>
 
@@ -179,7 +178,7 @@ export const MetronomeControls: React.FC<MetronomeControlsProps> = ({
                 title={isPlaying ? 'Stop the session to change tempo' : undefined}
                 className={`px-2.5 py-1 rounded-lg text-xs font-mono font-extrabold transition disabled:opacity-40 disabled:cursor-not-allowed ${
                   bpm === preset
-                    ? 'bg-teal-700 text-white dark:bg-teal-400 dark:text-slate-950 shadow-sm'
+                    ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-950 shadow-sm'
                     : 'bg-slate-300/80 dark:bg-slate-800 text-slate-900 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-700'
                 }`}
               >
@@ -190,7 +189,7 @@ export const MetronomeControls: React.FC<MetronomeControlsProps> = ({
               onClick={handleTapTempo}
               disabled={isPlaying}
               title={isPlaying ? 'Stop the session to change tempo' : undefined}
-              className="px-3 py-1 rounded-lg text-xs bg-indigo-100 dark:bg-indigo-600/30 text-indigo-800 dark:text-indigo-300 border border-indigo-300 dark:border-indigo-500/30 hover:bg-indigo-200 dark:hover:bg-indigo-600/50 font-extrabold transition disabled:opacity-40 disabled:cursor-not-allowed"
+              className="px-3 py-1 rounded-lg text-xs bg-slate-300/80 dark:bg-slate-800 text-slate-900 dark:text-slate-200 border border-slate-300 dark:border-slate-700 hover:bg-slate-300 dark:hover:bg-slate-700 font-extrabold transition disabled:opacity-40 disabled:cursor-not-allowed"
             >
               TAP
             </button>
@@ -206,7 +205,7 @@ export const MetronomeControls: React.FC<MetronomeControlsProps> = ({
           onChange={(e) => onBpmChange(parseInt(e.target.value, 10))}
           disabled={isPlaying}
           title={isPlaying ? 'Stop the session to change tempo' : undefined}
-          className="w-full h-2 bg-slate-300 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-teal-600 dark:accent-teal-400 disabled:opacity-40 disabled:cursor-not-allowed"
+          className="w-full h-2 bg-slate-300 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-slate-900 dark:accent-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"
         />
 
         {/* Beat Lights */}
@@ -219,7 +218,7 @@ export const MetronomeControls: React.FC<MetronomeControlsProps> = ({
                 onClick={() => setBeatsPerMeasure(num)}
                 className={`px-2 py-0.5 rounded-md text-xs font-mono font-extrabold transition ${
                   beatsPerMeasure === num
-                    ? 'bg-indigo-600 text-white'
+                    ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
                     : 'bg-slate-300/80 dark:bg-slate-800 text-slate-800 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700'
                 }`}
               >
@@ -241,8 +240,8 @@ export const MetronomeControls: React.FC<MetronomeControlsProps> = ({
                   className={`w-3.5 h-3.5 rounded-full transition-all duration-75 ${
                     isActive
                       ? isAccent
-                        ? 'bg-amber-500 dark:bg-amber-400 shadow-md shadow-amber-500/50 scale-125'
-                        : 'bg-teal-500 dark:bg-teal-400 shadow-md shadow-teal-500/50 scale-125'
+                        ? 'bg-slate-900 dark:bg-white scale-125'
+                        : 'bg-slate-600 dark:bg-slate-300 scale-110'
                       : 'bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700'
                   }`}
                 />

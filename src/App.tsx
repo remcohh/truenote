@@ -73,7 +73,7 @@ export function App() {
   };
 
   return (
-    <div className="min-h-screen bg-ambient-light dark:bg-ambient-dark text-slate-900 dark:text-slate-100 font-sans flex flex-col selection:bg-teal-500 selection:text-white transition-colors duration-300">
+    <div className="min-h-screen bg-ambient-light dark:bg-ambient-dark text-slate-900 dark:text-slate-100 font-sans flex flex-col selection:bg-slate-900 selection:text-white dark:selection:bg-slate-100 dark:selection:text-slate-900 transition-colors duration-200">
       {/* Top Header */}
       <Header
         activeTab={activeTab}

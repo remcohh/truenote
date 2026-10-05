@@ -468,7 +468,7 @@ export const MusicSheetViewer: React.FC<MusicSheetViewerProps> = ({
             >
               <ZoomOut size={15} />
             </button>
-            <span className="text-xs font-mono w-11 text-center text-teal-700 dark:text-teal-400 font-black">
+            <span className="text-xs font-mono w-11 text-center text-slate-900 dark:text-slate-100 font-bold">
               {Math.round(zoom * 100)}%
             </span>
             <button
@@ -491,7 +491,7 @@ export const MusicSheetViewer: React.FC<MusicSheetViewerProps> = ({
                 const instrument = INSTRUMENTS.find((i) => i.id === e.target.value);
                 if (instrument) onTransposeChange(instrument.transpose);
               }}
-              className="bg-transparent text-xs font-black text-indigo-700 dark:text-indigo-400 focus:outline-none cursor-pointer py-0.5"
+              className="bg-transparent text-xs font-bold text-slate-900 dark:text-slate-100 focus:outline-none cursor-pointer py-0.5"
               title="Instrument (transposes the sheet to this instrument's part)"
             >
               {!selectedInstrument && (
@@ -536,8 +536,8 @@ export const MusicSheetViewer: React.FC<MusicSheetViewerProps> = ({
               onClick={onTogglePlay}
               className={`p-1.5 rounded-lg transition ml-1 text-white shadow-sm ${
                 isPlaying
-                  ? "bg-rose-500 hover:bg-rose-600 shadow-rose-500/25"
-                  : "bg-emerald-600 hover:bg-emerald-500 shadow-emerald-600/25"
+                  ? "bg-rose-600 hover:bg-rose-700"
+                  : "bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:hover:bg-slate-100 dark:text-slate-900"
               }`}
               title={isPlaying ? "Stop Session" : "Start Session"}
             >
@@ -552,9 +552,9 @@ export const MusicSheetViewer: React.FC<MusicSheetViewerProps> = ({
               <span
                 className={`w-2.5 h-2.5 rounded-full transition-all duration-100 ${
                   isBeatFlashing
-                    ? "bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,1.0)] scale-125 ring-2 ring-emerald-300/80"
+                    ? "bg-slate-900 dark:bg-white scale-125"
                     : isPlaying
-                      ? "bg-emerald-950 dark:bg-emerald-900/40 border border-emerald-500/40"
+                      ? "bg-slate-600 dark:bg-slate-400"
                       : "bg-slate-300 dark:bg-slate-700 border border-slate-400/40"
                 }`}
               />
@@ -566,7 +566,7 @@ export const MusicSheetViewer: React.FC<MusicSheetViewerProps> = ({
             <button
               onClick={toggleCursorVisibility}
               className={`p-1 rounded-lg transition ml-1 ${
-                cursorVisible ? "text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-slate-800" : "text-slate-400"
+                cursorVisible ? "text-slate-900 dark:text-white bg-slate-300/80 dark:bg-slate-800" : "text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
               }`}
               title="Toggle Cursor Visibility"
             >
@@ -576,21 +576,21 @@ export const MusicSheetViewer: React.FC<MusicSheetViewerProps> = ({
             {/* Metronome & Pitch Tuner modal triggers */}
             <button
               onClick={onOpenMetronome}
-              className="p-1 rounded-lg text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-slate-800 transition ml-1"
+              className="p-1 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-300/80 dark:hover:bg-slate-800 transition ml-1"
               title="Metronome & Options"
             >
               <Timer size={15} />
             </button>
             <button
               onClick={onOpenPitchTuner}
-              className="p-1 rounded-lg text-teal-600 dark:text-teal-400 hover:bg-teal-50 dark:hover:bg-slate-800 transition"
+              className="p-1 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-300/80 dark:hover:bg-slate-800 transition"
               title="Pitch Tuner"
             >
               <Mic size={15} />
             </button>
             <button
               onClick={onOpenScoringTuner}
-              className="p-1 rounded-lg text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-slate-800 transition ml-1"
+              className="p-1 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-300/80 dark:hover:bg-slate-800 transition ml-1"
               title="Scoring Tuning"
             >
               <SlidersHorizontal size={15} />
@@ -599,14 +599,14 @@ export const MusicSheetViewer: React.FC<MusicSheetViewerProps> = ({
               onClick={onOpenAudioPlayer}
               className={`p-1 rounded-lg transition ml-1 relative ${
                 isAudioGuideEnabled
-                  ? "text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-slate-800"
-                  : "text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800"
+                  ? "text-slate-900 dark:text-white bg-slate-300/80 dark:bg-slate-800"
+                  : "text-slate-700 dark:text-slate-300 hover:bg-slate-300/80 dark:hover:bg-slate-800"
               }`}
               title="Audio Accompaniment & Soundfont Options"
             >
               <Volume2 size={15} />
               {isAudioGuideEnabled && (
-                <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-emerald-500 rounded-full" />
+                <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-slate-900 dark:bg-white rounded-full" />
               )}
             </button>
           </div>
@@ -626,7 +626,7 @@ export const MusicSheetViewer: React.FC<MusicSheetViewerProps> = ({
       {/* Loading & Error Overlays */}
       {loading && (
         <div className="flex flex-col items-center justify-center py-20 text-slate-500 dark:text-slate-400 gap-3">
-          <div className="w-9 h-9 border-3 border-indigo-600 dark:border-indigo-400 border-t-transparent rounded-full animate-spin"></div>
+          <div className="w-8 h-8 border-2 border-slate-900 dark:border-white border-t-transparent rounded-full animate-spin"></div>
           <span className="text-xs font-bold uppercase tracking-wide">Loading Sheet Music...</span>
         </div>
       )}

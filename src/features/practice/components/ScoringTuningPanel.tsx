@@ -43,7 +43,6 @@ export function ScoringTuningPanel({
     <div className="glass-card p-5 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-md dark:shadow-lg flex flex-col gap-5 min-w-0">
       <CardHeader
         icon={<SlidersHorizontal size={18} />}
-        iconColorClass="bg-amber-500/10 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/20 dark:border-amber-500/30"
         title="Scoring Tuning"
         subtitle="Live-adjust how the pitch sampler decides right vs. wrong"
       />
@@ -53,7 +52,7 @@ export function ScoringTuningPanel({
           <label htmlFor="release-window-slider" className="text-xs font-bold text-slate-700 dark:text-slate-300">
             Release window
           </label>
-          <span className="text-lg font-extrabold text-teal-700 dark:text-teal-400 font-mono">
+          <span className="text-lg font-extrabold text-slate-900 dark:text-slate-100 font-mono">
             {Math.round(releaseWindowFraction * 100)}%
           </span>
         </div>
@@ -68,12 +67,12 @@ export function ScoringTuningPanel({
           step="1"
           value={Math.round(releaseWindowFraction * 100)}
           onChange={(e) => onReleaseWindowFractionChange(parseInt(e.target.value, 10) / 100)}
-          className="w-full h-2 bg-slate-300 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-teal-600 dark:accent-teal-400"
+          className="w-full h-2 bg-slate-300 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-slate-900 dark:accent-slate-100"
         />
         {releaseWindowFraction !== DEFAULT_RELEASE_WINDOW_FRACTION && (
           <button
             onClick={() => onReleaseWindowFractionChange(DEFAULT_RELEASE_WINDOW_FRACTION)}
-            className="self-start text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
+            className="self-start text-[11px] font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:underline"
           >
             Reset to default ({Math.round(DEFAULT_RELEASE_WINDOW_FRACTION * 100)}%)
           </button>
@@ -85,7 +84,7 @@ export function ScoringTuningPanel({
           <label htmlFor="stale-pitch-slider" className="text-xs font-bold text-slate-700 dark:text-slate-300">
             Pitch staleness tolerance
           </label>
-          <span className="text-lg font-extrabold text-teal-700 dark:text-teal-400 font-mono">
+          <span className="text-lg font-extrabold text-slate-900 dark:text-slate-100 font-mono">
             {stalePitchMs}ms
           </span>
         </div>
@@ -100,12 +99,12 @@ export function ScoringTuningPanel({
           step="10"
           value={stalePitchMs}
           onChange={(e) => onStalePitchMsChange(parseInt(e.target.value, 10))}
-          className="w-full h-2 bg-slate-300 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-teal-600 dark:accent-teal-400"
+          className="w-full h-2 bg-slate-300 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-slate-900 dark:accent-slate-100"
         />
         {stalePitchMs !== DEFAULT_STALE_PITCH_MS && (
           <button
             onClick={() => onStalePitchMsChange(DEFAULT_STALE_PITCH_MS)}
-            className="self-start text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
+            className="self-start text-[11px] font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:underline"
           >
             Reset to default ({DEFAULT_STALE_PITCH_MS}ms)
           </button>
@@ -117,7 +116,7 @@ export function ScoringTuningPanel({
           <label htmlFor="intonation-tolerance-slider" className="text-xs font-bold text-slate-700 dark:text-slate-300">
             Intonation tolerance
           </label>
-          <span className="text-lg font-extrabold text-teal-700 dark:text-teal-400 font-mono">
+          <span className="text-lg font-extrabold text-slate-900 dark:text-slate-100 font-mono">
             ±{intonationToleranceCents}c
           </span>
         </div>
@@ -132,12 +131,12 @@ export function ScoringTuningPanel({
           step="1"
           value={intonationToleranceCents}
           onChange={(e) => onIntonationToleranceCentsChange(parseInt(e.target.value, 10))}
-          className="w-full h-2 bg-slate-300 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-teal-600 dark:accent-teal-400"
+          className="w-full h-2 bg-slate-300 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-slate-900 dark:accent-slate-100"
         />
         {intonationToleranceCents !== DEFAULT_INTONATION_TOLERANCE_CENTS && (
           <button
             onClick={() => onIntonationToleranceCentsChange(DEFAULT_INTONATION_TOLERANCE_CENTS)}
-            className="self-start text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
+            className="self-start text-[11px] font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:underline"
           >
             Reset to default (±{DEFAULT_INTONATION_TOLERANCE_CENTS}c)
           </button>
@@ -149,7 +148,7 @@ export function ScoringTuningPanel({
           <label htmlFor="majority-threshold-slider" className="text-xs font-bold text-slate-700 dark:text-slate-300">
             Note majority threshold
           </label>
-          <span className="text-lg font-extrabold text-teal-700 dark:text-teal-400 font-mono">
+          <span className="text-lg font-extrabold text-slate-900 dark:text-slate-100 font-mono">
             {Math.round(majorityThreshold * 100)}%
           </span>
         </div>
@@ -164,12 +163,12 @@ export function ScoringTuningPanel({
           step="1"
           value={Math.round(majorityThreshold * 100)}
           onChange={(e) => onMajorityThresholdChange(parseInt(e.target.value, 10) / 100)}
-          className="w-full h-2 bg-slate-300 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-teal-600 dark:accent-teal-400"
+          className="w-full h-2 bg-slate-300 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-slate-900 dark:accent-slate-100"
         />
         {majorityThreshold !== DEFAULT_MAJORITY_THRESHOLD && (
           <button
             onClick={() => onMajorityThresholdChange(DEFAULT_MAJORITY_THRESHOLD)}
-            className="self-start text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
+            className="self-start text-[11px] font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:underline"
           >
             Reset to default ({Math.round(DEFAULT_MAJORITY_THRESHOLD * 100)}%)
           </button>
@@ -181,7 +180,7 @@ export function ScoringTuningPanel({
           <label htmlFor="vote-boundary-margin-slider" className="text-xs font-bold text-slate-700 dark:text-slate-300">
             Note boundary margin
           </label>
-          <span className="text-lg font-extrabold text-teal-700 dark:text-teal-400 font-mono">
+          <span className="text-lg font-extrabold text-slate-900 dark:text-slate-100 font-mono">
             {Math.round(voteBoundaryMarginFraction * 100)}%
           </span>
         </div>
@@ -197,12 +196,12 @@ export function ScoringTuningPanel({
           step="1"
           value={Math.round(voteBoundaryMarginFraction * 100)}
           onChange={(e) => onVoteBoundaryMarginFractionChange(parseInt(e.target.value, 10) / 100)}
-          className="w-full h-2 bg-slate-300 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-teal-600 dark:accent-teal-400"
+          className="w-full h-2 bg-slate-300 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-slate-900 dark:accent-slate-100"
         />
         {voteBoundaryMarginFraction !== DEFAULT_VOTE_BOUNDARY_MARGIN_FRACTION && (
           <button
             onClick={() => onVoteBoundaryMarginFractionChange(DEFAULT_VOTE_BOUNDARY_MARGIN_FRACTION)}
-            className="self-start text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
+            className="self-start text-[11px] font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:underline"
           >
             Reset to default ({Math.round(DEFAULT_VOTE_BOUNDARY_MARGIN_FRACTION * 100)}%)
           </button>
