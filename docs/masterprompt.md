@@ -3,14 +3,14 @@ Workflow: Stacked feature branches.
 
 Features to implement:
 
-1. Cleanup look and fee;
-   - Description: I want a more minimalistic elegant design, no gradients, lots of colors etc
-   - Base branch: main
-   - Target branch: feature/cleanup-look-and-feel
-2. Different pages have their own url
+1. Implement color palette;
+   - Description: The design is a bit too monochrome, implement this color paletten
+   - Base branch: feature/pages-own-url
+   - Target branch: feature/color-palette
+   <!-- 2. Different pages have their own url
    - Description: it is a single page app but i want different pages like library to have their own url
    - Base branch: feature/pages-own-url
-   - Target branch: feature/cleanup-look-and-feel
+   - Target branch: feature/cleanup-look-and-feel -->
 
 Execution Rules:
 

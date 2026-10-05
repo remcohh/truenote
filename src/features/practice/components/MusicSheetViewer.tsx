@@ -454,26 +454,26 @@ export const MusicSheetViewer: React.FC<MusicSheetViewerProps> = ({
       }`}
     >
       {/* Control Bar */}
-      <div className="sheet-controls flex flex-wrap items-center justify-between gap-3 mb-4 pb-3 border-b border-slate-300 dark:border-slate-800 text-sm">
+      <div className="sheet-controls flex flex-wrap items-center justify-between gap-3 mb-4 pb-3 border-b border-[#a8a492]/25 dark:border-[#524646]/70 text-sm">
         <div className="flex flex-wrap items-center gap-2">
           {/* Zoom Controls */}
-          <div className="flex items-center gap-1.5 bg-slate-200/70 dark:bg-slate-900/80 px-2.5 py-1.5 rounded-xl border border-slate-300 dark:border-slate-800">
-            <span className="text-[11px] text-slate-700 dark:text-slate-400 font-extrabold uppercase tracking-wider">
+          <div className="flex items-center gap-1.5 bg-warm-cream/70 dark:bg-[#342b2b] px-2.5 py-1.5 rounded-xl border border-[#a8a492]/30 dark:border-[#524646]">
+            <span className="text-[11px] text-[#a8a492] font-extrabold uppercase tracking-wider">
               Zoom
             </span>
             <button
               onClick={() => onZoomChange(Math.max(0.5, Math.round((zoom - 0.1) * 10) / 10))}
-              className="p-1 hover:bg-slate-300 dark:hover:bg-slate-800 rounded-lg text-slate-800 dark:text-slate-300 transition"
+              className="p-1 hover:bg-[#f2ece1] dark:hover:bg-[#433838] rounded-lg text-warm-dark dark:text-warm-cream transition"
               title="Zoom Out"
             >
               <ZoomOut size={15} />
             </button>
-            <span className="text-xs font-mono w-11 text-center text-slate-900 dark:text-slate-100 font-bold">
+            <span className="text-xs font-mono w-11 text-center text-warm-dark dark:text-warm-cream font-bold">
               {Math.round(zoom * 100)}%
             </span>
             <button
               onClick={() => onZoomChange(Math.min(2.0, Math.round((zoom + 0.1) * 10) / 10))}
-              className="p-1 hover:bg-slate-300 dark:hover:bg-slate-800 rounded-lg text-slate-800 dark:text-slate-300 transition"
+              className="p-1 hover:bg-[#f2ece1] dark:hover:bg-[#433838] rounded-lg text-warm-dark dark:text-warm-cream transition"
               title="Zoom In"
             >
               <ZoomIn size={15} />
@@ -481,8 +481,8 @@ export const MusicSheetViewer: React.FC<MusicSheetViewerProps> = ({
           </div>
 
           {/* Instrument Transposition */}
-          <div className="flex items-center gap-1.5 bg-slate-200/70 dark:bg-slate-900/80 px-2.5 py-1.5 rounded-xl border border-slate-300 dark:border-slate-800">
-            <span className="text-[11px] text-slate-700 dark:text-slate-400 font-extrabold uppercase tracking-wider">
+          <div className="flex items-center gap-1.5 bg-warm-cream/70 dark:bg-[#342b2b] px-2.5 py-1.5 rounded-xl border border-[#a8a492]/30 dark:border-[#524646]">
+            <span className="text-[11px] text-[#a8a492] font-extrabold uppercase tracking-wider">
               Instrument
             </span>
             <select
@@ -491,7 +491,7 @@ export const MusicSheetViewer: React.FC<MusicSheetViewerProps> = ({
                 const instrument = INSTRUMENTS.find((i) => i.id === e.target.value);
                 if (instrument) onTransposeChange(instrument.transpose);
               }}
-              className="bg-transparent text-xs font-bold text-slate-900 dark:text-slate-100 focus:outline-none cursor-pointer py-0.5"
+              className="bg-transparent text-xs font-bold text-warm-coral focus:outline-none cursor-pointer py-0.5"
               title="Instrument (transposes the sheet to this instrument's part)"
             >
               {!selectedInstrument && (
@@ -508,24 +508,24 @@ export const MusicSheetViewer: React.FC<MusicSheetViewerProps> = ({
           </div>
 
           {/* Cursor Steps */}
-          <div className="flex items-center gap-1 bg-slate-200/70 dark:bg-slate-900/80 px-2 py-1.5 rounded-xl border border-slate-300 dark:border-slate-800">
+          <div className="flex items-center gap-1 bg-warm-cream/70 dark:bg-[#342b2b] px-2 py-1.5 rounded-xl border border-[#a8a492]/30 dark:border-[#524646]">
             <button
               onClick={handleCursorPrev}
-              className="p-1 hover:bg-slate-300 dark:hover:bg-slate-800 rounded-lg text-slate-800 dark:text-slate-300 transition"
+              className="p-1 hover:bg-[#f2ece1] dark:hover:bg-[#433838] rounded-lg text-warm-dark dark:text-warm-cream transition"
               title="Previous Note"
             >
               <ChevronLeft size={16} />
             </button>
             <button
               onClick={handleCursorReset}
-              className="p-1 hover:bg-slate-300 dark:hover:bg-slate-800 rounded-lg text-slate-800 dark:text-slate-300 transition"
+              className="p-1 hover:bg-[#f2ece1] dark:hover:bg-[#433838] rounded-lg text-warm-dark dark:text-warm-cream transition"
               title="Reset Cursor to Start"
             >
               <RotateCcw size={14} />
             </button>
             <button
               onClick={handleCursorNext}
-              className="p-1 hover:bg-slate-300 dark:hover:bg-slate-800 rounded-lg text-slate-800 dark:text-slate-300 transition"
+              className="p-1 hover:bg-[#f2ece1] dark:hover:bg-[#433838] rounded-lg text-warm-dark dark:text-warm-cream transition"
               title="Next Note"
             >
               <ChevronRight size={16} />
@@ -534,10 +534,10 @@ export const MusicSheetViewer: React.FC<MusicSheetViewerProps> = ({
             {/* Play/Stop */}
             <button
               onClick={onTogglePlay}
-              className={`p-1.5 rounded-lg transition ml-1 text-white shadow-sm ${
+              className={`p-1.5 rounded-lg transition ml-1 text-white shadow-xs ${
                 isPlaying
                   ? "bg-rose-600 hover:bg-rose-700"
-                  : "bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:hover:bg-slate-100 dark:text-slate-900"
+                  : "bg-warm-coral hover:bg-[#d94e2d]"
               }`}
               title={isPlaying ? "Stop Session" : "Start Session"}
             >
@@ -546,19 +546,19 @@ export const MusicSheetViewer: React.FC<MusicSheetViewerProps> = ({
 
             {/* Flashing Beat LED Indicator */}
             <div
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-200/70 dark:bg-slate-900/80 border border-slate-300 dark:border-slate-800 ml-1 select-none"
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-warm-cream/70 dark:bg-[#342b2b] border border-[#a8a492]/30 dark:border-[#524646] ml-1 select-none"
               title={isPlaying ? "Beat LED (flashing on beat)" : "Beat LED (idle, flashes on beat during practice)"}
             >
               <span
                 className={`w-2.5 h-2.5 rounded-full transition-all duration-100 ${
                   isBeatFlashing
-                    ? "bg-slate-900 dark:bg-white scale-125"
+                    ? "bg-warm-coral scale-125 shadow-xs shadow-warm-coral/50"
                     : isPlaying
-                      ? "bg-slate-600 dark:bg-slate-400"
-                      : "bg-slate-300 dark:bg-slate-700 border border-slate-400/40"
+                      ? "bg-warm-coral/40"
+                      : "bg-[#a8a492]/40"
                 }`}
               />
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-400 font-mono">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#a8a492] font-mono">
                 BEAT
               </span>
             </div>
@@ -566,7 +566,7 @@ export const MusicSheetViewer: React.FC<MusicSheetViewerProps> = ({
             <button
               onClick={toggleCursorVisibility}
               className={`p-1 rounded-lg transition ml-1 ${
-                cursorVisible ? "text-slate-900 dark:text-white bg-slate-300/80 dark:bg-slate-800" : "text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
+                cursorVisible ? "text-warm-coral bg-warm-coral/10" : "text-[#a8a492] hover:text-warm-dark dark:hover:text-warm-cream"
               }`}
               title="Toggle Cursor Visibility"
             >
@@ -576,21 +576,21 @@ export const MusicSheetViewer: React.FC<MusicSheetViewerProps> = ({
             {/* Metronome & Pitch Tuner modal triggers */}
             <button
               onClick={onOpenMetronome}
-              className="p-1 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-300/80 dark:hover:bg-slate-800 transition ml-1"
+              className="p-1 rounded-lg text-warm-dark dark:text-warm-cream hover:text-warm-coral hover:bg-warm-coral/10 transition ml-1"
               title="Metronome & Options"
             >
               <Timer size={15} />
             </button>
             <button
               onClick={onOpenPitchTuner}
-              className="p-1 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-300/80 dark:hover:bg-slate-800 transition"
+              className="p-1 rounded-lg text-warm-dark dark:text-warm-cream hover:text-warm-coral hover:bg-warm-coral/10 transition"
               title="Pitch Tuner"
             >
               <Mic size={15} />
             </button>
             <button
               onClick={onOpenScoringTuner}
-              className="p-1 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-300/80 dark:hover:bg-slate-800 transition ml-1"
+              className="p-1 rounded-lg text-warm-dark dark:text-warm-cream hover:text-warm-coral hover:bg-warm-coral/10 transition ml-1"
               title="Scoring Tuning"
             >
               <SlidersHorizontal size={15} />
@@ -599,14 +599,14 @@ export const MusicSheetViewer: React.FC<MusicSheetViewerProps> = ({
               onClick={onOpenAudioPlayer}
               className={`p-1 rounded-lg transition ml-1 relative ${
                 isAudioGuideEnabled
-                  ? "text-slate-900 dark:text-white bg-slate-300/80 dark:bg-slate-800"
-                  : "text-slate-700 dark:text-slate-300 hover:bg-slate-300/80 dark:hover:bg-slate-800"
+                  ? "text-warm-coral bg-warm-coral/10"
+                  : "text-warm-dark dark:text-warm-cream hover:text-warm-coral hover:bg-warm-coral/10"
               }`}
               title="Audio Accompaniment & Soundfont Options"
             >
               <Volume2 size={15} />
               {isAudioGuideEnabled && (
-                <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-slate-900 dark:bg-white rounded-full" />
+                <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-warm-coral rounded-full" />
               )}
             </button>
           </div>
@@ -615,7 +615,7 @@ export const MusicSheetViewer: React.FC<MusicSheetViewerProps> = ({
         {/* Right Side: Fullscreen Button */}
         <button
           onClick={toggleFullscreen}
-          className="p-2 bg-slate-100/90 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition flex items-center gap-1.5 text-xs font-semibold"
+          className="p-2 bg-warm-cream/70 dark:bg-[#342b2b] border border-[#a8a492]/30 dark:border-[#524646] rounded-xl text-warm-dark dark:text-warm-cream hover:text-warm-coral transition flex items-center gap-1.5 text-xs font-semibold"
           title="Toggle Fullscreen Sheet View"
         >
           {isFullscreen ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
@@ -625,8 +625,8 @@ export const MusicSheetViewer: React.FC<MusicSheetViewerProps> = ({
 
       {/* Loading & Error Overlays */}
       {loading && (
-        <div className="flex flex-col items-center justify-center py-20 text-slate-500 dark:text-slate-400 gap-3">
-          <div className="w-8 h-8 border-2 border-slate-900 dark:border-white border-t-transparent rounded-full animate-spin"></div>
+        <div className="flex flex-col items-center justify-center py-20 text-[#a8a492] gap-3">
+          <div className="w-8 h-8 border-2 border-warm-coral border-t-transparent rounded-full animate-spin"></div>
           <span className="text-xs font-bold uppercase tracking-wide">Loading Sheet Music...</span>
         </div>
       )}

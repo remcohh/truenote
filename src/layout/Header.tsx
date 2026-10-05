@@ -46,28 +46,28 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-white/85 dark:bg-slate-950/85 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800/80 px-4 py-3 shadow-sm dark:shadow-xl transition-colors duration-200">
+    <header className="sticky top-0 z-40 bg-white/90 dark:bg-[#272121]/90 backdrop-blur-md border-b border-[#a8a492]/25 dark:border-[#524646]/60 px-4 py-3 shadow-xs dark:shadow-xl transition-colors duration-200">
       <div className="w-full px-2 sm:px-4 md:px-6 flex items-center justify-between gap-3">
 
         {/* Brand Logo */}
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-slate-900 dark:bg-slate-100 flex items-center justify-center text-white dark:text-slate-900 shadow-xs">
+          <div className="w-9 h-9 rounded-xl bg-warm-coral flex items-center justify-center text-white shadow-xs">
             <Music size={18} />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="font-bold text-base text-slate-900 dark:text-slate-100 tracking-tight">TrueNote</h1>
-              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700/60 font-mono">
+              <h1 className="font-bold text-base text-warm-dark dark:text-warm-cream tracking-tight">TrueNote</h1>
+              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-warm-cream text-warm-dark dark:bg-[#3a3030] dark:text-warm-cream border border-[#a8a492]/40 font-mono">
                 PWA
               </span>
             </div>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 font-normal hidden sm:block">Sight-Reading & Pitch Practice</p>
+            <p className="text-[11px] text-[#a8a492] font-medium hidden sm:block">Sight-Reading & Pitch Practice</p>
           </div>
         </div>
 
         {/* Tab Navigation */}
         {user && (
-          <nav className="flex items-center gap-1 bg-slate-100 dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-medium">
+          <nav className="flex items-center gap-1 bg-warm-cream/70 dark:bg-[#342b2b] p-1 rounded-xl border border-[#a8a492]/30 dark:border-[#524646] text-xs font-medium">
             <a
               href="/library"
               onClick={(e) => {
@@ -76,8 +76,8 @@ export const Header: React.FC<HeaderProps> = ({
               }}
               className={`px-3.5 py-1.5 rounded-lg transition-all duration-150 ${
                 activeTab === 'library'
-                  ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 shadow-xs font-semibold'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-200/50 dark:hover:bg-slate-800/50'
+                  ? 'bg-warm-coral text-white shadow-xs font-semibold'
+                  : 'text-warm-dark/80 dark:text-warm-cream/80 hover:text-warm-coral dark:hover:text-warm-coral hover:bg-warm-coral/10'
               }`}
             >
               Library
@@ -90,8 +90,8 @@ export const Header: React.FC<HeaderProps> = ({
               }}
               className={`px-3.5 py-1.5 rounded-lg transition-all duration-150 ${
                 activeTab === 'practice'
-                  ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 shadow-xs font-semibold'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-200/50 dark:hover:bg-slate-800/50'
+                  ? 'bg-warm-coral text-white shadow-xs font-semibold'
+                  : 'text-warm-dark/80 dark:text-warm-cream/80 hover:text-warm-coral dark:hover:text-warm-coral hover:bg-warm-coral/10'
               }`}
             >
               Practice
@@ -104,8 +104,8 @@ export const Header: React.FC<HeaderProps> = ({
               }}
               className={`px-3.5 py-1.5 rounded-lg transition-all duration-150 ${
                 activeTab === 'stats'
-                  ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 shadow-xs font-semibold'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-200/50 dark:hover:bg-slate-800/50'
+                  ? 'bg-warm-coral text-white shadow-xs font-semibold'
+                  : 'text-warm-dark/80 dark:text-warm-cream/80 hover:text-warm-coral dark:hover:text-warm-coral hover:bg-warm-coral/10'
               }`}
             >
               Stats
@@ -119,7 +119,7 @@ export const Header: React.FC<HeaderProps> = ({
           {isInstallable && (
             <button
               onClick={handleInstallClick}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 dark:bg-slate-100 dark:hover:bg-white text-white dark:text-slate-900 font-medium text-xs rounded-lg transition shadow-xs"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-warm-coral hover:bg-[#d94e2d] text-white font-medium text-xs rounded-lg transition shadow-xs"
             >
               <Download size={14} /> Install App
             </button>
@@ -128,22 +128,22 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Theme Toggle Button */}
           <button
             onClick={onToggleTheme}
-            className="p-2 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition"
+            className="p-2 rounded-xl bg-warm-cream/70 dark:bg-[#342b2b] border border-[#a8a492]/30 dark:border-[#524646] text-warm-dark dark:text-warm-cream hover:bg-[#f0e6d6] dark:hover:bg-[#433838] transition"
             title={`Switch to ${theme === 'light' ? 'Dark' : 'Light'} Mode`}
           >
             {theme === 'light' ? <Sun size={16} /> : <Moon size={16} />}
           </button>
 
-          {/* Account: signed-out has no header affordance — the whole app is the login page then */}
+          {/* Account */}
           {user && (
             <button
               onClick={() => {
                 if (confirm('Sign out?')) logoutUser();
               }}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium text-xs rounded-xl transition"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-warm-cream/70 dark:bg-[#342b2b] border border-[#a8a492]/30 dark:border-[#524646] hover:bg-[#f0e6d6] dark:hover:bg-[#433838] text-warm-dark dark:text-warm-cream font-medium text-xs rounded-xl transition"
               title="Sign out"
             >
-              <UserCircle2 size={16} className="text-slate-500 dark:text-slate-400" />
+              <UserCircle2 size={16} className="text-[#a8a492]" />
               <span className="hidden sm:inline max-w-[8rem] truncate">{user.name}</span>
               <LogOut size={13} />
             </button>
