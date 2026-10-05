@@ -65,11 +65,15 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        {/* Tab Navigation — nothing to switch between until there's a session */}
+        {/* Tab Navigation */}
         {user && (
           <nav className="flex items-center gap-1 bg-slate-100 dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-medium">
-            <button
-              onClick={() => onTabChange('library')}
+            <a
+              href="/library"
+              onClick={(e) => {
+                e.preventDefault();
+                onTabChange('library');
+              }}
               className={`px-3.5 py-1.5 rounded-lg transition-all duration-150 ${
                 activeTab === 'library'
                   ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 shadow-xs font-semibold'
@@ -77,9 +81,27 @@ export const Header: React.FC<HeaderProps> = ({
               }`}
             >
               Library
-            </button>
-            <button
-              onClick={() => onTabChange('stats')}
+            </a>
+            <a
+              href="/practice"
+              onClick={(e) => {
+                e.preventDefault();
+                onTabChange('practice');
+              }}
+              className={`px-3.5 py-1.5 rounded-lg transition-all duration-150 ${
+                activeTab === 'practice'
+                  ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 shadow-xs font-semibold'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-200/50 dark:hover:bg-slate-800/50'
+              }`}
+            >
+              Practice
+            </a>
+            <a
+              href="/stats"
+              onClick={(e) => {
+                e.preventDefault();
+                onTabChange('stats');
+              }}
               className={`px-3.5 py-1.5 rounded-lg transition-all duration-150 ${
                 activeTab === 'stats'
                   ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 shadow-xs font-semibold'
@@ -87,7 +109,7 @@ export const Header: React.FC<HeaderProps> = ({
               }`}
             >
               Stats
-            </button>
+            </a>
           </nav>
         )}
 
