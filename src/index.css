@@ -2,6 +2,13 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+@theme {
+  --color-warm-dark: #524646;
+  --color-warm-stone: #a8a492;
+  --color-warm-cream: #fcf2e5;
+  --color-warm-coral: #ec5b38;
+}
+
 @layer base {
   :root {
     color-scheme: light;
@@ -21,38 +28,37 @@
   }
 }
 
-
-/* Clean Minimalist Cards */
+/* Warm Palette Cards & Panels */
 .glass-card {
   background: #ffffff;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.05), 0 1px 2px -1px rgba(15, 23, 42, 0.05);
+  border: 1px solid rgba(168, 164, 146, 0.28);
+  box-shadow: 0 1px 3px 0 rgba(82, 70, 70, 0.06), 0 1px 2px -1px rgba(82, 70, 70, 0.04);
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .dark .glass-card {
-  background: #0f172a;
-  border: 1px solid #1e293b;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.3);
+  background: #362d2d;
+  border: 1px solid #524646;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.35);
 }
 
 .glass-panel {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: #fbf6ee;
+  border: 1px solid rgba(168, 164, 146, 0.28);
 }
 
 .dark .glass-panel {
-  background: #0f172a;
-  border: 1px solid #1e293b;
+  background: #362d2d;
+  border: 1px solid #524646;
 }
 
-/* Minimalist Clean Theme Backgrounds (No Gradients) */
+/* Warm Palette Theme Backgrounds */
 .bg-ambient-light {
-  background-color: #f8fafc;
+  background-color: #fcf2e5;
 }
 
 .bg-ambient-dark, .dark .bg-ambient-light {
-  background-color: #090d16 !important;
+  background-color: #272121 !important;
 }
 
 
@@ -68,20 +74,20 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #a8a492;
   border-radius: 9999px;
 }
 
 .dark ::-webkit-scrollbar-thumb {
-  background: #1e293b;
+  background: #524646;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #8f8a76;
 }
 
 .dark ::-webkit-scrollbar-thumb:hover {
-  background: #334155;
+  background: #6a5c5c;
 }
 
 /* OpenSheetMusicDisplay SVG & Cursor Styling Overrides */
@@ -101,8 +107,6 @@
   filter: invert(0.92) hue-rotate(180deg) !important;
 }
 
-
-
 /* OSMD Music Sheet Cursor Styling */
 /* display is intentionally left to the cursor's own inline style (see
    MusicSheetViewer's styleCursorElement) so hide()/show() keep working */
@@ -115,24 +119,20 @@
   border-radius: 3px;
 }
 
-
-
-
-
 /* Custom range slider styling */
 input[type="range"]::-webkit-slider-thumb {
   appearance: none;
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: #0f172a;
+  background: #ec5b38;
   cursor: pointer;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 1px 3px rgba(82, 70, 70, 0.3);
   transition: transform 0.15s ease-in-out, background-color 0.15s;
 }
 
 .dark input[type="range"]::-webkit-slider-thumb {
-  background: #f8fafc;
+  background: #ec5b38;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
 }
 
