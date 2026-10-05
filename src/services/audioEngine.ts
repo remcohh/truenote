@@ -54,6 +54,16 @@ class AudioEngine {
     }
   }
 
+  public getAudioContext(): AudioContext {
+    this.initAudioContext();
+    return this.audioCtx!;
+  }
+
+  public getDestinationNode(): AudioNode {
+    this.initAudioContext();
+    return this.limiterNode ?? this.audioCtx!.destination;
+  }
+
   // --- Metronome ---
   public startMetronome(bpm: number, beatsPerMeasure: number, onBeat?: (beat: number) => void, startBeatIndex: number = 0) {
     this.stopMetronome(); // Always kill existing timer to prevent overlapping loops

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Exercise, PracticeSession, ScoreSample } from '../../../types';
 import { audioEngine } from '../../../services/audioEngine';
+import { soundfontPlayer } from '../../../services/soundfontPlayer';
 import { findActiveNote, type NoteTimelineEntry } from '../utils/noteTimelineGenerator';
 import {
   evaluateSample,
@@ -37,6 +38,15 @@ export function usePracticeSession({ currentExercise, bpm, transpose }: UsePract
   const [countInBeat, setCountInBeat] = useState(4);
   const countInBeatsRemainingRef = useRef(4);
 
+  const AUDIO_GUIDE_STORAGE_KEY = 'truenote_audio_guide_enabled';
+  const [isAudioGuideEnabled, setIsAudioGuideEnabled] = useState(() => {
+    return localStorage.getItem(AUDIO_GUIDE_STORAGE_KEY) === 'true';
+  });
+  const isAudioGuideEnabledRef = useRef(isAudioGuideEnabled);
+  useEffect(() => {
+    isAudioGuideEnabledRef.current = isAudioGuideEnabled;
+  }, [isAudioGuideEnabled]);
+
   const [stepTrigger, setStepTrigger] = useState(-1);
   const [startBeatIndex, setStartBeatIndex] = useState(0);
   const [detectedBeatsPerMeasure, setDetectedBeatsPerMeasure] = useState(4);
@@ -68,7 +78,10 @@ export function usePracticeSession({ currentExercise, bpm, transpose }: UsePract
   // metronome-tick-quantized cursor), plus enough state to convert wall-clock time
   // into "where in the piece are we right now" without drifting when bpm changes
   // mid-practice.
+  const [timeline, setTimeline] = useState<NoteTimelineEntry[]>([]);
+  const [playbackTimeline, setPlaybackTimeline] = useState<NoteTimelineEntry[]>([]);
   const noteTimelineRef = useRef<NoteTimelineEntry[]>([]);
+  const playbackTimelineRef = useRef<NoteTimelineEntry[]>([]);
   const currentBeatIndexRef = useRef(0);
   const lastBeatTimeRef = useRef(0);
   const bpmRef = useRef(bpm);
@@ -89,11 +102,19 @@ export function usePracticeSession({ currentExercise, bpm, transpose }: UsePract
   const startPracticeNow = useCallback(() => {
     setIsPlaying(true);
     resetPracticeCounters();
+    const playTl = playbackTimelineRef.current.length > 0 ? playbackTimelineRef.current : noteTimelineRef.current;
+    if (isAudioGuideEnabledRef.current && playTl.length > 0) {
+      soundfontPlayer.playTimeline(playTl, {
+        bpm: bpmRef.current,
+        transpose: transposeRef.current,
+      });
+    }
   }, [resetPracticeCounters]);
 
   const stopPracticeAndSaveLog = useCallback(async () => {
     setIsPlaying(false);
     setIsCountInActive(false);
+    soundfontPlayer.stop();
 
     const startTime = practiceStartTimeRef.current;
     if (!startTime) return;
@@ -126,6 +147,7 @@ export function usePracticeSession({ currentExercise, bpm, transpose }: UsePract
       setIsPlaying(false);
       setIsCountInActive(false);
       setStepTrigger(-1);
+      soundfontPlayer.stop();
       stopPracticeAndSaveLog();
     } else {
       setLastFinishedSession(null);
@@ -158,6 +180,12 @@ export function usePracticeSession({ currentExercise, bpm, transpose }: UsePract
         setIsCountInActive(false);
         setStepTrigger(0);
         resetPracticeCounters();
+        if (isAudioGuideEnabledRef.current && noteTimelineRef.current.length > 0) {
+          soundfontPlayer.playTimeline(noteTimelineRef.current, {
+            bpm: bpmRef.current,
+            transpose: transposeRef.current,
+          });
+        }
       }
     } else if (isPlaying) {
       // Click 6 (Measure 1 Beat 2): Advance cursor!
@@ -208,6 +236,10 @@ export function usePracticeSession({ currentExercise, bpm, transpose }: UsePract
 
   /** Called when the caller switches exercises: stops any run in progress and clears its state. */
   const resetForExercise = useCallback((ex: Exercise) => {
+    soundfontPlayer.stop();
+    setTimeline([]);
+    setPlaybackTimeline([]);
+    playbackTimelineRef.current = [];
     setDetectedBeatsPerMeasure(ex.beatsPerMeasure || 4);
     setIsPlaying(false);
     setIsCountInActive(false);
@@ -219,8 +251,14 @@ export function usePracticeSession({ currentExercise, bpm, transpose }: UsePract
     setCurrentTargetNote(note);
   }, []);
 
-  const handleNoteTimelineBuilt = useCallback((timeline: NoteTimelineEntry[]) => {
-    noteTimelineRef.current = timeline;
+  const handleNoteTimelineBuilt = useCallback((tl: NoteTimelineEntry[]) => {
+    noteTimelineRef.current = tl;
+    setTimeline(tl);
+  }, []);
+
+  const handlePlaybackTimelineBuilt = useCallback((tl: NoteTimelineEntry[]) => {
+    playbackTimelineRef.current = tl;
+    setPlaybackTimeline(tl);
   }, []);
 
   const dismissFinishedSession = useCallback(() => {
@@ -236,11 +274,26 @@ export function usePracticeSession({ currentExercise, bpm, transpose }: UsePract
     setIsCountInEnabled((prev) => !prev);
   }, []);
 
+  const toggleAudioGuide = useCallback(() => {
+    setIsAudioGuideEnabled((prev) => {
+      const next = !prev;
+      localStorage.setItem('truenote_audio_guide_enabled', String(next));
+      if (!next) {
+        soundfontPlayer.stop();
+      }
+      return next;
+    });
+  }, []);
+
   return {
     isPlaying,
     currentTargetNote,
+    timeline,
+    playbackTimeline,
     isCountInEnabled,
     toggleCountIn,
+    isAudioGuideEnabled,
+    toggleAudioGuide,
     isCountInActive,
     countInBeat,
     stepTrigger,
@@ -254,6 +307,7 @@ export function usePracticeSession({ currentExercise, bpm, transpose }: UsePract
     handleBeatTick,
     handleCurrentNoteChange,
     handleNoteTimelineBuilt,
+    handlePlaybackTimelineBuilt,
     onExerciseFinished: stopPracticeAndSaveLog,
     resetForExercise,
     dismissFinishedSession,
@@ -269,6 +323,6 @@ export function usePracticeSession({ currentExercise, bpm, transpose }: UsePract
     voteBoundaryMarginFraction,
     setVoteBoundaryMarginFraction,
   };
-}
+  }
 
 export type PracticeSessionApi = ReturnType<typeof usePracticeSession>;

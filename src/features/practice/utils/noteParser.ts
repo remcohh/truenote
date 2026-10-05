@@ -17,7 +17,22 @@ export function noteLetter(noteName: string): string {
 
 export function getCurrentTargetPitch(cursor: any, transpose: number = 0): string | null {
   if (!cursor) return null;
-  const notes = cursor.NotesUnderCursor();
+
+  let notes: any[] | null = null;
+  const firstInstrument = cursor.openSheetMusicDisplay?.Sheet?.Instruments?.[0];
+  if (firstInstrument && typeof cursor.NotesUnderCursor === 'function') {
+    try {
+      notes = cursor.NotesUnderCursor(firstInstrument);
+    } catch {
+      notes = null;
+    }
+  }
+
+  if (!notes || notes.length === 0) {
+    if (!firstInstrument && typeof cursor.NotesUnderCursor === 'function') {
+      notes = cursor.NotesUnderCursor();
+    }
+  }
 
   if (notes && notes.length > 0) {
     const pitch = notes[0].Pitch;

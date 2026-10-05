@@ -3,7 +3,9 @@ import { MusicSheetViewer } from "./MusicSheetViewer";
 import { MetronomeControls } from "./MetronomeControls";
 import { PitchDetector } from "./PitchDetector";
 import { ScoringTuningPanel } from "./ScoringTuningPanel";
+import { AudioPlayerModal } from "./AudioPlayerModal";
 import { Modal } from "../../../components/Modal";
+import { DraggableWidget } from "../../../components/DraggableWidget";
 import type { Exercise } from "../../../types";
 import type { PracticeSessionApi } from "../hooks/usePracticeSession";
 
@@ -37,6 +39,7 @@ export function PracticeView({
   const [showMetronomeModal, setShowMetronomeModal] = useState(false);
   const [showPitchTunerModal, setShowPitchTunerModal] = useState(false);
   const [showScoringTuningModal, setShowScoringTuningModal] = useState(false);
+  const [showAudioPlayerModal, setShowAudioPlayerModal] = useState(false);
 
   const isPlaying = practice.isPlaying || practice.isCountInActive;
 
@@ -96,14 +99,19 @@ export function PracticeView({
           isPlaying={isPlaying}
           bpm={bpm}
           stepTrigger={practice.stepTrigger}
+          countInBeat={practice.countInBeat}
           onCurrentNoteChange={practice.handleCurrentNoteChange}
           onExerciseFinished={practice.onExerciseFinished}
           onTimeSignatureDetected={practice.setDetectedBeatsPerMeasure}
           onNoteTimelineBuilt={practice.handleNoteTimelineBuilt}
+          onPlaybackTimelineBuilt={practice.handlePlaybackTimelineBuilt}
           onTogglePlay={practice.handleTogglePlay}
           onOpenMetronome={() => setShowMetronomeModal(true)}
           onOpenPitchTuner={() => setShowPitchTunerModal(true)}
           onOpenScoringTuner={() => setShowScoringTuningModal(true)}
+          onOpenAudioPlayer={() => setShowAudioPlayerModal(true)}
+          isAudioGuideEnabled={practice.isAudioGuideEnabled}
+          onToggleAudioGuide={practice.toggleAudioGuide}
         />
       </div>
 
@@ -123,9 +131,13 @@ export function PracticeView({
         />
       </Modal>
 
-      <Modal open={showPitchTunerModal} onClose={() => setShowPitchTunerModal(false)}>
+      <DraggableWidget
+        open={showPitchTunerModal}
+        onClose={() => setShowPitchTunerModal(false)}
+        title="Pitch Tuner"
+      >
         <PitchDetector currentTargetNote={practice.currentTargetNote} />
-      </Modal>
+      </DraggableWidget>
 
       <Modal open={showScoringTuningModal} onClose={() => setShowScoringTuningModal(false)}>
         <ScoringTuningPanel
@@ -139,6 +151,17 @@ export function PracticeView({
           onMajorityThresholdChange={practice.setMajorityThreshold}
           voteBoundaryMarginFraction={practice.voteBoundaryMarginFraction}
           onVoteBoundaryMarginFractionChange={practice.setVoteBoundaryMarginFraction}
+        />
+      </Modal>
+
+      <Modal open={showAudioPlayerModal} onClose={() => setShowAudioPlayerModal(false)}>
+        <AudioPlayerModal
+          isEnabled={practice.isAudioGuideEnabled}
+          onToggleEnabled={practice.toggleAudioGuide}
+          isSessionActive={isPlaying}
+          timeline={practice.playbackTimeline.length > 0 ? practice.playbackTimeline : practice.timeline}
+          bpm={bpm}
+          transpose={transpose}
         />
       </Modal>
     </div>

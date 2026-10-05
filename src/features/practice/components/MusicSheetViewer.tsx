@@ -1,11 +1,27 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { OpenSheetMusicDisplay } from 'opensheetmusicdisplay';
-import { ZoomIn, ZoomOut, RotateCcw, ChevronLeft, ChevronRight, Eye, Maximize2, Minimize2, Play, Square, Timer, Mic, SlidersHorizontal } from 'lucide-react';
-import { buildBeatStepMap } from '../utils/beatMapGenerator';
-import { buildNoteTimeline, type NoteTimelineEntry } from '../utils/noteTimelineGenerator';
-import { getCurrentTargetPitch } from '../utils/noteParser';
-import { INSTRUMENTS } from '../data/instruments';
-import { ErrorBanner } from '../../../components/ErrorBanner';
+import React, { useEffect, useRef, useState } from "react";
+import { OpenSheetMusicDisplay } from "opensheetmusicdisplay";
+import {
+  ZoomIn,
+  ZoomOut,
+  RotateCcw,
+  ChevronLeft,
+  ChevronRight,
+  Eye,
+  Maximize2,
+  Minimize2,
+  Play,
+  Square,
+  Timer,
+  Mic,
+  SlidersHorizontal,
+  Volume2,
+} from "lucide-react";
+import { buildBeatStepMap } from "../utils/beatMapGenerator";
+import { buildNoteTimeline, buildScorePlaybackTimeline, type NoteTimelineEntry } from "../utils/noteTimelineGenerator";
+import { getCurrentTargetPitch } from "../utils/noteParser";
+import { INSTRUMENTS } from "../data/instruments";
+import { ErrorBanner } from "../../../components/ErrorBanner";
+import { soundfontPlayer } from "../../../services/soundfontPlayer";
 
 interface MusicSheetViewerProps {
   xmlData: string;
@@ -16,15 +32,22 @@ interface MusicSheetViewerProps {
   isPlaying: boolean;
   bpm: number;
   stepTrigger?: number;
+  countInBeat?: number;
   onCurrentNoteChange?: (noteName: string | null) => void;
   onExerciseFinished?: () => void;
   onTimeSignatureDetected?: (beatsPerMeasure: number) => void;
   onTotalBeatsDetected?: (totalBeats: number) => void;
   onNoteTimelineBuilt?: (timeline: NoteTimelineEntry[]) => void;
+  onPlaybackTimelineBuilt?: (timeline: NoteTimelineEntry[]) => void;
   onTogglePlay?: () => void;
   onOpenMetronome?: () => void;
   onOpenPitchTuner?: () => void;
   onOpenScoringTuner?: () => void;
+  onOpenAudioPlayer?: () => void;
+  isToneGeneratorEnabled?: boolean;
+  onToggleToneGenerator?: () => void;
+  isAudioGuideEnabled?: boolean;
+  onToggleAudioGuide?: () => void;
 }
 
 export const MusicSheetViewer: React.FC<MusicSheetViewerProps> = ({
@@ -36,15 +59,22 @@ export const MusicSheetViewer: React.FC<MusicSheetViewerProps> = ({
   isPlaying,
   bpm,
   stepTrigger,
+  countInBeat,
   onCurrentNoteChange,
   onExerciseFinished,
   onTimeSignatureDetected,
   onTotalBeatsDetected,
   onNoteTimelineBuilt,
+  onPlaybackTimelineBuilt,
   onTogglePlay,
   onOpenMetronome,
   onOpenPitchTuner,
   onOpenScoringTuner,
+  onOpenAudioPlayer,
+  isToneGeneratorEnabled,
+  onToggleToneGenerator,
+  isAudioGuideEnabled = false,
+  onToggleAudioGuide,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const osmdRef = useRef<OpenSheetMusicDisplay | null>(null);
@@ -53,6 +83,23 @@ export const MusicSheetViewer: React.FC<MusicSheetViewerProps> = ({
   const [cursorVisible, setCursorVisible] = useState<boolean>(true);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const sheetWrapperRef = useRef<HTMLDivElement>(null);
+  const [sheetTimeline, setSheetTimeline] = useState<NoteTimelineEntry[]>([]);
+
+  const [isBeatFlashing, setIsBeatFlashing] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (stepTrigger === undefined || stepTrigger < 0) return;
+    setIsBeatFlashing(true);
+    const timer = setTimeout(() => setIsBeatFlashing(false), 140);
+    return () => clearTimeout(timer);
+  }, [stepTrigger]);
+
+  useEffect(() => {
+    if (countInBeat === undefined) return;
+    setIsBeatFlashing(true);
+    const timer = setTimeout(() => setIsBeatFlashing(false), 140);
+    return () => clearTimeout(timer);
+  }, [countInBeat]);
 
   const beatStepMapRef = useRef<number[]>([]);
   const currentStepRef = useRef<number>(0);
@@ -65,11 +112,11 @@ export const MusicSheetViewer: React.FC<MusicSheetViewerProps> = ({
     const el = cursor?.cursorElement;
     if (!cursor || !el) return;
 
-    el.style.display = cursor.Hidden ? 'none' : 'block';
+    el.style.display = cursor.Hidden ? "none" : "block";
 
-    const height = el.getAttribute('height');
+    const height = el.getAttribute("height");
     if (height) el.style.height = `${height}px`;
-    const width = el.getAttribute('width');
+    const width = el.getAttribute("width");
     if (width) el.style.width = `${width}px`;
   };
 
@@ -108,11 +155,16 @@ export const MusicSheetViewer: React.FC<MusicSheetViewerProps> = ({
     if (onTotalBeatsDetected && result.map.length > 0) {
       onTotalBeatsDetected(result.map.length);
     }
+    const timeline = buildNoteTimeline(osmdRef.current, bpm);
+    const playbackTimeline = buildScorePlaybackTimeline(osmdRef.current, bpm);
+    setSheetTimeline(playbackTimeline.length > 0 ? playbackTimeline : timeline);
     if (onNoteTimelineBuilt) {
-      onNoteTimelineBuilt(buildNoteTimeline(osmdRef.current, bpm));
+      onNoteTimelineBuilt(timeline);
+    }
+    if (onPlaybackTimelineBuilt) {
+      onPlaybackTimelineBuilt(playbackTimeline);
     }
   };
-
 
   // Initialize OSMD
   useEffect(() => {
@@ -122,12 +174,12 @@ export const MusicSheetViewer: React.FC<MusicSheetViewerProps> = ({
     setError(null);
     beatStepMapRef.current = [];
     currentStepRef.current = 0;
-    containerRef.current.innerHTML = '';
+    containerRef.current.innerHTML = "";
 
     try {
       const osmd = new OpenSheetMusicDisplay(containerRef.current, {
         autoResize: true,
-        backend: 'svg',
+        backend: "svg",
         drawTitle: true,
         drawSubtitle: false,
         drawComposer: true,
@@ -136,7 +188,7 @@ export const MusicSheetViewer: React.FC<MusicSheetViewerProps> = ({
         cursorsOptions: [
           {
             type: 0,
-            color: '#0d9488',
+            color: "#0d9488",
             alpha: 0.3,
             follow: true,
           },
@@ -171,13 +223,13 @@ export const MusicSheetViewer: React.FC<MusicSheetViewerProps> = ({
           });
         })
         .catch((err) => {
-          console.error('OSMD load error:', err);
-          setError('Could not parse MusicXML data.');
+          console.error("OSMD load error:", err);
+          setError("Could not parse MusicXML data.");
           setLoading(false);
         });
     } catch (err: any) {
-      console.error('OSMD init error:', err);
-      setError(err.message || 'Error initializing OpenSheetMusicDisplay.');
+      console.error("OSMD init error:", err);
+      setError(err.message || "Error initializing OpenSheetMusicDisplay.");
       setLoading(false);
     }
   }, [xmlData]);
@@ -219,8 +271,16 @@ export const MusicSheetViewer: React.FC<MusicSheetViewerProps> = ({
   // so rebuild it whenever bpm changes. Tempo controls are disabled during a session,
   // so in practice this only re-runs between sessions, never mid-practice.
   useEffect(() => {
-    if (osmdRef.current && !loading && beatStepMapRef.current.length > 0 && onNoteTimelineBuilt) {
-      onNoteTimelineBuilt(buildNoteTimeline(osmdRef.current, bpm));
+    if (osmdRef.current && !loading && beatStepMapRef.current.length > 0) {
+      const timeline = buildNoteTimeline(osmdRef.current, bpm);
+      const playbackTimeline = buildScorePlaybackTimeline(osmdRef.current, bpm);
+      setSheetTimeline(playbackTimeline.length > 0 ? playbackTimeline : timeline);
+      if (onNoteTimelineBuilt) {
+        onNoteTimelineBuilt(timeline);
+      }
+      if (onPlaybackTimelineBuilt) {
+        onPlaybackTimelineBuilt(playbackTimeline);
+      }
     }
   }, [bpm]);
 
@@ -251,6 +311,12 @@ export const MusicSheetViewer: React.FC<MusicSheetViewerProps> = ({
         const targetStepIndex = map[stepTrigger];
         const cursor = osmdRef.current.cursor;
 
+        // Reset if we need to seek backward
+        if (currentStepRef.current > targetStepIndex) {
+          cursor.reset();
+          currentStepRef.current = 0;
+        }
+
         // Advance cursor until currentStepRef matches targetStepIndex
         while (currentStepRef.current < targetStepIndex && !cursor.iterator.EndReached) {
           cursor.next();
@@ -267,12 +333,57 @@ export const MusicSheetViewer: React.FC<MusicSheetViewerProps> = ({
         // The completion modal renders outside this element's subtree, so the native
         // fullscreen layer would hide it until fullscreen is exited.
         if (document.fullscreenElement) {
-          document.exitFullscreen().then(() => setIsFullscreen(false)).catch(console.error);
+          document
+            .exitFullscreen()
+            .then(() => setIsFullscreen(false))
+            .catch(console.error);
         }
         if (onExerciseFinished) onExerciseFinished();
       }
     }
   }, [stepTrigger]);
+
+  const auditionCurrentNote = () => {
+    if (!isAudioGuideEnabled) return;
+    if (!osmdRef.current?.cursor) return;
+    const notes = osmdRef.current.cursor.NotesUnderCursor();
+    if (notes && notes.length > 0 && notes[0]?.Pitch) {
+      soundfontPlayer.playNote(notes[0].Pitch.halfTone + transpose, 0.4);
+    }
+  };
+
+  // Seeks cursor to a specific beat position (driven by audio player)
+  const handleAudioSeekBeat = (targetBeat: number) => {
+    if (!osmdRef.current || !osmdRef.current.cursor) return;
+    if (!beatStepMapRef.current || beatStepMapRef.current.length === 0) {
+      extractSheetMetadata();
+    }
+    const map = beatStepMapRef.current;
+    if (!map || map.length === 0) return;
+
+    const targetStepIndex = targetBeat < map.length ? map[targetBeat] : 0;
+    const cursor = osmdRef.current.cursor;
+
+    if (targetBeat === 0) {
+      cursor.reset();
+      cursor.show();
+      currentStepRef.current = 0;
+      refreshCursorAndNote();
+      return;
+    }
+
+    if (currentStepRef.current > targetStepIndex) {
+      cursor.reset();
+      currentStepRef.current = 0;
+    }
+
+    while (currentStepRef.current < targetStepIndex && !cursor.iterator.EndReached) {
+      cursor.next();
+      currentStepRef.current += 1;
+    }
+
+    refreshCursorAndNote();
+  };
 
   // Moves the cursor back to the start of the piece
   const handleCursorReset = () => {
@@ -280,6 +391,7 @@ export const MusicSheetViewer: React.FC<MusicSheetViewerProps> = ({
       osmdRef.current.cursor.reset();
       currentStepRef.current = 0;
       refreshCursorAndNote();
+      auditionCurrentNote();
     }
   };
 
@@ -289,6 +401,7 @@ export const MusicSheetViewer: React.FC<MusicSheetViewerProps> = ({
       osmdRef.current.cursor.next();
       currentStepRef.current += 1;
       refreshCursorAndNote();
+      auditionCurrentNote();
     }
   };
 
@@ -298,6 +411,7 @@ export const MusicSheetViewer: React.FC<MusicSheetViewerProps> = ({
       osmdRef.current.cursor.previous();
       currentStepRef.current = Math.max(0, currentStepRef.current - 1);
       refreshCursorAndNote();
+      auditionCurrentNote();
     }
   };
 
@@ -318,9 +432,15 @@ export const MusicSheetViewer: React.FC<MusicSheetViewerProps> = ({
   const toggleFullscreen = () => {
     if (!sheetWrapperRef.current) return;
     if (!document.fullscreenElement) {
-      sheetWrapperRef.current.requestFullscreen().then(() => setIsFullscreen(true)).catch(console.error);
+      sheetWrapperRef.current
+        .requestFullscreen()
+        .then(() => setIsFullscreen(true))
+        .catch(console.error);
     } else {
-      document.exitFullscreen().then(() => setIsFullscreen(false)).catch(console.error);
+      document
+        .exitFullscreen()
+        .then(() => setIsFullscreen(false))
+        .catch(console.error);
     }
   };
 
@@ -330,7 +450,7 @@ export const MusicSheetViewer: React.FC<MusicSheetViewerProps> = ({
     <div
       ref={sheetWrapperRef}
       className={`sheet-viewer-container glass-card p-4 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-lg dark:shadow-2xl transition-all ${
-        isFullscreen ? 'fixed inset-0 z-50 rounded-none bg-white dark:bg-slate-950 p-6 overflow-y-auto' : ''
+        isFullscreen ? "fixed inset-0 z-50 rounded-none bg-white dark:bg-slate-950 p-6 overflow-y-auto" : ""
       }`}
     >
       {/* Control Bar */}
@@ -338,7 +458,9 @@ export const MusicSheetViewer: React.FC<MusicSheetViewerProps> = ({
         <div className="flex flex-wrap items-center gap-2">
           {/* Zoom Controls */}
           <div className="flex items-center gap-1.5 bg-slate-200/70 dark:bg-slate-900/80 px-2.5 py-1.5 rounded-xl border border-slate-300 dark:border-slate-800">
-            <span className="text-[11px] text-slate-700 dark:text-slate-400 font-extrabold uppercase tracking-wider">Zoom</span>
+            <span className="text-[11px] text-slate-700 dark:text-slate-400 font-extrabold uppercase tracking-wider">
+              Zoom
+            </span>
             <button
               onClick={() => onZoomChange(Math.max(0.5, Math.round((zoom - 0.1) * 10) / 10))}
               className="p-1 hover:bg-slate-300 dark:hover:bg-slate-800 rounded-lg text-slate-800 dark:text-slate-300 transition"
@@ -360,9 +482,11 @@ export const MusicSheetViewer: React.FC<MusicSheetViewerProps> = ({
 
           {/* Instrument Transposition */}
           <div className="flex items-center gap-1.5 bg-slate-200/70 dark:bg-slate-900/80 px-2.5 py-1.5 rounded-xl border border-slate-300 dark:border-slate-800">
-            <span className="text-[11px] text-slate-700 dark:text-slate-400 font-extrabold uppercase tracking-wider">Instrument</span>
+            <span className="text-[11px] text-slate-700 dark:text-slate-400 font-extrabold uppercase tracking-wider">
+              Instrument
+            </span>
             <select
-              value={selectedInstrument?.id ?? 'custom'}
+              value={selectedInstrument?.id ?? "custom"}
               onChange={(e) => {
                 const instrument = INSTRUMENTS.find((i) => i.id === e.target.value);
                 if (instrument) onTransposeChange(instrument.transpose);
@@ -412,20 +536,37 @@ export const MusicSheetViewer: React.FC<MusicSheetViewerProps> = ({
               onClick={onTogglePlay}
               className={`p-1.5 rounded-lg transition ml-1 text-white shadow-sm ${
                 isPlaying
-                  ? 'bg-rose-500 hover:bg-rose-600 shadow-rose-500/25'
-                  : 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-600/25'
+                  ? "bg-rose-500 hover:bg-rose-600 shadow-rose-500/25"
+                  : "bg-emerald-600 hover:bg-emerald-500 shadow-emerald-600/25"
               }`}
-              title={isPlaying ? 'Stop Session' : 'Start Session'}
+              title={isPlaying ? "Stop Session" : "Start Session"}
             >
               {isPlaying ? <Square size={14} fill="currentColor" /> : <Play size={14} fill="currentColor" />}
             </button>
 
+            {/* Flashing Beat LED Indicator */}
+            <div
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-200/70 dark:bg-slate-900/80 border border-slate-300 dark:border-slate-800 ml-1 select-none"
+              title={isPlaying ? "Beat LED (flashing on beat)" : "Beat LED (idle, flashes on beat during practice)"}
+            >
+              <span
+                className={`w-2.5 h-2.5 rounded-full transition-all duration-100 ${
+                  isBeatFlashing
+                    ? "bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,1.0)] scale-125 ring-2 ring-emerald-300/80"
+                    : isPlaying
+                      ? "bg-emerald-950 dark:bg-emerald-900/40 border border-emerald-500/40"
+                      : "bg-slate-300 dark:bg-slate-700 border border-slate-400/40"
+                }`}
+              />
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-400 font-mono">
+                BEAT
+              </span>
+            </div>
+
             <button
               onClick={toggleCursorVisibility}
               className={`p-1 rounded-lg transition ml-1 ${
-                cursorVisible
-                  ? 'text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-slate-800'
-                  : 'text-slate-400'
+                cursorVisible ? "text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-slate-800" : "text-slate-400"
               }`}
               title="Toggle Cursor Visibility"
             >
@@ -454,6 +595,20 @@ export const MusicSheetViewer: React.FC<MusicSheetViewerProps> = ({
             >
               <SlidersHorizontal size={15} />
             </button>
+            <button
+              onClick={onOpenAudioPlayer}
+              className={`p-1 rounded-lg transition ml-1 relative ${
+                isAudioGuideEnabled
+                  ? "text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-slate-800"
+                  : "text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800"
+              }`}
+              title="Audio Accompaniment & Soundfont Options"
+            >
+              <Volume2 size={15} />
+              {isAudioGuideEnabled && (
+                <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-emerald-500 rounded-full" />
+              )}
+            </button>
           </div>
         </div>
 
@@ -464,7 +619,7 @@ export const MusicSheetViewer: React.FC<MusicSheetViewerProps> = ({
           title="Toggle Fullscreen Sheet View"
         >
           {isFullscreen ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
-          <span className="hidden md:inline">{isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}</span>
+          <span className="hidden md:inline">{isFullscreen ? "Exit Fullscreen" : "Fullscreen"}</span>
         </button>
       </div>
 

@@ -73,19 +73,16 @@ export const PitchDetector: React.FC<PitchDetectorProps> = ({
   }, []);
 
   return (
-    <div className="pitch-detector-card glass-card p-5 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-md dark:shadow-lg flex flex-col gap-3.5 min-w-0">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <CardHeader
-          icon={<Mic size={18} />}
-          iconColorClass="bg-teal-500/10 dark:bg-teal-500/20 text-teal-600 dark:text-teal-400 border border-teal-500/20 dark:border-teal-500/30"
-          title="Pitch Tuner"
-          subtitle="Mic pitch analyzer"
-        />
+    <div className="flex flex-col gap-3 min-w-0">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+          Real-time Mic Analyzer
+        </span>
 
         {/* Mic Toggle Button */}
         <button
           onClick={toggleMic}
-          className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition border ${
+          className={`flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold transition border ${
             isListening
               ? 'bg-teal-50 dark:bg-teal-500/20 border-teal-300 dark:border-teal-500/50 text-teal-700 dark:text-teal-300 shadow-sm'
               : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
@@ -94,12 +91,12 @@ export const PitchDetector: React.FC<PitchDetectorProps> = ({
           {isListening ? (
             <>
               <span className="w-2 h-2 rounded-full bg-teal-500 dark:bg-teal-400 animate-ping"></span>
-              <Mic size={14} />
-              Listening...
+              <Mic size={13} />
+              Listening
             </>
           ) : (
             <>
-              <MicOff size={14} /> Enable Mic
+              <MicOff size={13} /> Enable Mic
             </>
           )}
         </button>

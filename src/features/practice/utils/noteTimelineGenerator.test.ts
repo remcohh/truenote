@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildNoteTimeline, findActiveNote, NoteTimelineEntry } from './noteTimelineGenerator';
+import { buildNoteTimeline, buildScorePlaybackTimeline, findActiveNote, NoteTimelineEntry } from './noteTimelineGenerator';
 
 describe('noteTimelineGenerator utility', () => {
   describe('buildNoteTimeline', () => {
@@ -85,6 +85,90 @@ describe('noteTimelineGenerator utility', () => {
       // At 60 bpm, one beat = 1 second; this note spans 2 beats (0.5 whole-note * 4).
       expect(timeline[0].startTime).toBe(0);
       expect(timeline[0].endTime).toBe(2);
+    });
+
+    it('filters out accompaniment staff (staff index > 0) for solo pitch detection', () => {
+      const mockMultiPartOsmd: any = {
+        Sheet: {
+          SourceMeasures: [
+            {
+              AbsoluteTimestamp: { realValue: 0.0 },
+              VerticalSourceStaffEntryContainers: [
+                {
+                  Timestamp: { realValue: 0.0 },
+                  StaffEntries: [
+                    {
+                      ParentStaff: { idInMusicSheet: 0 },
+                      VoiceEntries: [
+                        {
+                          Notes: [{ isRest: () => false, Pitch: { halfTone: 60 }, Length: { realValue: 0.25 } }],
+                        },
+                      ],
+                    },
+                    {
+                      ParentStaff: { idInMusicSheet: 1 },
+                      VoiceEntries: [
+                        {
+                          Notes: [{ isRest: () => false, Pitch: { halfTone: 48 }, Length: { realValue: 0.25 } }],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      };
+
+      const timeline = buildNoteTimeline(mockMultiPartOsmd, 120);
+      expect(timeline).toHaveLength(1);
+      expect(timeline[0].halfTone).toBe(60); // Solo note only, accompaniment 48 skipped
+    });
+  });
+
+  describe('buildScorePlaybackTimeline', () => {
+    it('returns empty array when osmd is null or missing', () => {
+      expect(buildScorePlaybackTimeline(null, 120)).toEqual([]);
+    });
+
+    it('collects notes across both primary and accompaniment staves', () => {
+      const mockMultiPartOsmd: any = {
+        Sheet: {
+          SourceMeasures: [
+            {
+              AbsoluteTimestamp: { realValue: 0.0 },
+              VerticalSourceStaffEntryContainers: [
+                {
+                  Timestamp: { realValue: 0.0 },
+                  StaffEntries: [
+                    {
+                      ParentStaff: { idInMusicSheet: 0 },
+                      VoiceEntries: [
+                        {
+                          Notes: [{ isRest: () => false, Pitch: { halfTone: 60 }, Length: { realValue: 0.25 } }],
+                        },
+                      ],
+                    },
+                    {
+                      ParentStaff: { idInMusicSheet: 1 },
+                      VoiceEntries: [
+                        {
+                          Notes: [{ isRest: () => false, Pitch: { halfTone: 48 }, Length: { realValue: 0.25 } }],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      };
+
+      const timeline = buildScorePlaybackTimeline(mockMultiPartOsmd, 120);
+      expect(timeline).toHaveLength(2);
+      expect(timeline.map((n) => n.halfTone)).toEqual([60, 48]);
     });
   });
 
